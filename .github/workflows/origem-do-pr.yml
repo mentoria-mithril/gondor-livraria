@@ -1,0 +1,26 @@
+name: Origem do PR
+
+# `main` só recebe release, e release só sai de `dev`.
+# O ruleset sabe exigir aprovação, mas não sabe restringir a origem de um PR —
+# por isso esta verificação existe e é registrada como status check obrigatório na `main`.
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  verificar-origem:
+    # Este nome é o contexto exigido pelo ruleset da main (ver projeto-novo.sh).
+    # Mudar aqui sem mudar lá derruba a proteção em silêncio.
+    name: PR para main vem de dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: A branch de origem precisa ser dev
+        env:
+          ORIGEM: ${{ github.head_ref }}
+        run: |
+          if [ "$ORIGEM" != "dev" ]; then
+            echo "::error::PR para main veio de '$ORIGEM'. Só 'dev' pode abrir PR para main."
+            echo "Abra este PR para 'dev'. A main recebe só o PR de release, feito de dev."
+            exit 1
+          fi
+          echo "Origem 'dev' confirmada."
