@@ -1,0 +1,58 @@
+name: Tarefa
+description: Uma fatia de trabalho que cabe numa sprint
+labels: ["tarefa"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Um card só pode entrar em **Em progresso** com os critérios de aceite escritos.
+        Se você não consegue escrevê-los, ainda não entendeu a tarefa — pergunte antes de começar.
+
+  - type: textarea
+    id: contexto
+    attributes:
+      label: O que precisa existir
+      description: Descreva pelo comportamento esperado, não pela implementação.
+      placeholder: |
+        O aluno precisa conseguir entregar o desafio da semana informando a URL do repositório.
+    validations:
+      required: true
+
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Critérios de aceite
+      description: |
+        Lista verificável. Cada item precisa ser observável por outra pessoa, sem ler o código.
+        Inclua pelo menos um caso de borda — é onde a tarefa quase sempre quebra.
+      value: |
+        - [ ]
+        - [ ]
+        - [ ] Caso de borda:
+    validations:
+      required: true
+
+  - type: textarea
+    id: fora-de-escopo
+    attributes:
+      label: Fora de escopo
+      description: O que esta tarefa deliberadamente **não** faz. Evita PR inchado.
+    validations:
+      required: false
+
+  - type: textarea
+    id: como-testar
+    attributes:
+      label: Como verificar
+      description: Os passos que quem revisar vai seguir para ver isso funcionando.
+    validations:
+      required: true
+
+  - type: input
+    id: depende-de
+    attributes:
+      label: Depende de
+      description: Números de issues que precisam estar prontas antes desta. Deixe vazio se não houver.
+      placeholder: "#12, #15"
+    validations:
+      required: false
