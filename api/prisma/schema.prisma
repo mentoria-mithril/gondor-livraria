@@ -1,0 +1,109 @@
+// Modelo de dados da Livraria. É o combinado no README — mudança aqui passa por
+// conversa na issue, não direto no arquivo.
+//
+// Depois de mudar algo:  npm run banco:migrar
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id         String   @id @default(uuid())
+  nome       String
+  email      String   @unique
+  senha      String // sempre hash, nunca texto puro
+  dtCriacao  DateTime @default(now()) @map("dt_criacao")
+
+  carrinho Carrinho?
+  pedidos  Pedido[]
+
+  @@map("usuario")
+}
+
+model Livro {
+  id            Int      @id @default(autoincrement())
+  titulo        String
+  autor         String
+  categoria     String
+  sinopse       String
+  preco         Decimal  @db.Decimal(10, 2)
+  estoque       Int      @default(0)
+  dtCriacao     DateTime @default(now()) @map("dt_criacao")
+
+  itensCarrinho ItemCarrinho[]
+  itensPedido   ItemPedido[]
+
+  // Busca por título e por autor são o caminho quente da fatia B.
+  @@index([titulo])
+  @@index([autor])
+  @@index([categoria])
+  @@map("livro")
+}
+
+model Carrinho {
+  id             String   @id @default(uuid())
+  usuarioId      String   @unique @map("usuario_id")
+  dtAtualizacao  DateTime @updatedAt @map("dt_atualizacao")
+
+  usuario Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  itens   ItemCarrinho[]
+
+  @@map("carrinho")
+}
+
+model ItemCarrinho {
+  id          String @id @default(uuid())
+  carrinhoId  String @map("carrinho_id")
+  livroId     Int    @map("livro_id")
+  quantidade  Int
+
+  carrinho Carrinho @relation(fields: [carrinhoId], references: [id], onDelete: Cascade)
+  livro    Livro    @relation(fields: [livroId], references: [id])
+
+  // É ESTA linha que impede duas linhas do mesmo livro no mesmo carrinho.
+  // Um findFirst antes do create não impede — duas requisições simultâneas passam pelas duas.
+  @@unique([carrinhoId, livroId])
+  @@map("item_carrinho")
+}
+
+enum StatusPedido {
+  AGUARDANDO_PAGAMENTO
+  PAGO
+  RECUSADO
+
+  @@map("status_pedido")
+}
+
+model Pedido {
+  id          String       @id @default(uuid())
+  usuarioId   String       @map("usuario_id")
+  status      StatusPedido @default(AGUARDANDO_PAGAMENTO)
+  valorTotal  Decimal      @map("valor_total") @db.Decimal(10, 2)
+  dtCriacao   DateTime     @default(now()) @map("dt_criacao")
+
+  usuario Usuario      @relation(fields: [usuarioId], references: [id])
+  itens   ItemPedido[]
+
+  @@index([usuarioId, dtCriacao])
+  @@map("pedido")
+}
+
+model ItemPedido {
+  id             String  @id @default(uuid())
+  pedidoId       String  @map("pedido_id")
+  livroId        Int     @map("livro_id")
+  quantidade     Int
+  // O preço do DIA DA COMPRA. Se o livro.preco mudar amanhã, o pedido de ontem
+  // não muda junto. Ler o preço de um pedido pela tabela livro é erro de review.
+  precoUnitario  Decimal @map("preco_unitario") @db.Decimal(10, 2)
+
+  pedido Pedido @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  livro  Livro  @relation(fields: [livroId], references: [id])
+
+  @@map("item_pedido")
+}
