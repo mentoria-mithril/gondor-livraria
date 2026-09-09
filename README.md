@@ -48,26 +48,28 @@ O que a turma já usou nos encontros, sem novidade só por novidade:
 | Camada | Escolha |
 | --- | --- |
 | API | Node 22+ e Express |
-| Banco | PostgreSQL, acessado com `pg` (SQL escrito à mão, sem ORM) |
+| Banco | PostgreSQL, acessado pelo **Prisma** (schema, migrações e client tipado) |
 | Ambiente | Docker Compose sobe o banco; a API roda em container a partir da sprint de infra |
 | Testes | `node:test` — o runner nativo, o mesmo do kata de TDD |
 | Front | Uma página por tela, consumindo a API. A escolha da biblioteca é decisão da turma na sprint 1 |
 
-SQL na mão é intencional: o objetivo do ciclo é vocês enxergarem a consulta que roda,
-não a que o ORM gera.
+O Prisma dá o schema num arquivo só, migração versionada e client gerado — mas ele não
+dispensa entender a consulta. Quando uma listagem ficar lenta, ligue
+`log: ['query']` no client e **leia o SQL que ele gerou**. Saber o que o ORM fez por você
+é parte do que está sendo avaliado.
 
 ---
 
 ## O modelo de dados
 
-Seis tabelas. É o suficiente para a loja inteira:
+Seis modelos no `api/prisma/schema.prisma`. É o suficiente para a loja inteira:
 
 | Tabela | Campos que importam |
 | --- | --- |
 | `usuario` | id, nome, email (único), senha (hash), dt_criacao |
 | `livro` | id, titulo, autor, categoria, sinopse, preco, estoque, dt_criacao |
 | `carrinho` | id, usuario_id (FK), dt_atualizacao |
-| `item_carrinho` | id, carrinho_id (FK), livro_id (FK), quantidade — **único por (carrinho_id, livro_id)** |
+| `item_carrinho` | id, carrinho_id (FK), livro_id (FK), quantidade — **`@@unique([carrinho_id, livro_id])`** |
 | `pedido` | id, usuario_id (FK), status, valor_total, dt_criacao |
 | `item_pedido` | id, pedido_id (FK), livro_id (FK), quantidade, **preco_unitario** |
 
@@ -76,8 +78,12 @@ Duas decisões que vão aparecer em review, então já ficam escritas:
 - **`item_pedido.preco_unitario` existe de propósito.** O preço do pedido é o preço do dia
   da compra. Se o `livro.preco` mudar amanhã, o pedido de ontem não pode mudar junto —
   quem lê o preço do pedido pela tabela `livro` vai receber comentário no PR.
-- **A unicidade de `(carrinho_id, livro_id)` é do banco, não do código.** É o que impede
-  duas linhas do mesmo livro no mesmo carrinho mesmo com duas requisições concorrentes.
+- **A unicidade de `(carrinho_id, livro_id)` é do banco, não do código.** É o
+  `@@unique` no schema que impede duas linhas do mesmo livro no mesmo carrinho mesmo com
+  duas requisições concorrentes — um `findFirst` antes do `create` não impede.
+- **Fechar pedido é uma transação.** Conferir estoque, criar o pedido, criar os itens e
+  baixar o estoque acontecem dentro de um `prisma.$transaction`. Meio pedido gravado é
+  pior que pedido nenhum.
 
 **Decisão em aberto para a turma:** o carrinho exige login, ou existe carrinho anônimo que
 migra no login? As duas respostas se defendem. Decidam na sprint 1 e escrevam o porquê na
@@ -117,7 +123,7 @@ api/src/
 ├── rotas/           só diz qual URL chama qual controlador
 ├── controladores/   entrada e saída de HTTP. Sem regra de negócio.
 ├── servicos/        ← a regra de negócio mora aqui
-├── repositorios/    único lugar que escreve SQL
+├── repositorios/    único lugar que importa o Prisma
 ├── esquemas/        validação da entrada
 ├── middlewares/     autenticação e tratamento de erro
 └── erros/           ErroDeDominio: erro esperado, não é bug
@@ -129,7 +135,8 @@ Três regras que valem em review:
    certo: o serviço.
 2. **Serviço não conhece `req` nem `res`.** Recebe dado, devolve dado. É isso que deixa
    ele testável sem subir servidor.
-3. **Só repositório escreve SQL.** Consulta espalhada em serviço volta no review.
+3. **Só repositório importa `prisma`.** É isso que deixa o serviço testável sem subir
+   banco. `prisma.livro.findMany` dentro de um serviço volta no review.
 
 Erro esperado — livro sem estoque, email já cadastrado — é
 `throw new ErroDeDominio("...", 409)`, e o middleware transforma em resposta HTTP.
@@ -145,7 +152,7 @@ arquivo e o merge para de doer.
 
 | Fatia | O que entrega |
 | --- | --- |
-| **0 — Esqueleto** | Sprint 1, a turma inteira junto: `docker compose` com o Postgres, projeto da API de pé, `GET /api/saude` respondendo, script de migração e o *seed* do catálogo. É o exemplo que as outras fatias copiam. |
+| **0 — Esqueleto** | Sprint 1, a turma inteira junto: `docker compose` com o Postgres, projeto da API de pé, `schema.prisma` com os seis modelos, primeira migração, `GET /api/saude` e o *seed* do catálogo. É o exemplo que as outras fatias copiam. |
 | **A — Conta** | `POST /api/usuarios`, `POST /api/auth`, hash de senha, middleware de autenticação, telas de cadastro e login |
 | **B — Catálogo** | `GET /api/livros` com busca, filtro e paginação, `GET /api/livros/:id`, listagem e página de detalhe |
 | **C — Carrinho** | as quatro rotas de `/api/carrinho`, a regra de juntar linhas repetidas, e a tela do carrinho |
