@@ -7,10 +7,11 @@ encontro 05 entram aqui, agora dentro de um produto de verdade.
 
 O quadro da turma: <https://github.com/orgs/mentoria-mithril/projects/5>
 
-> **Este repositório está vazio de propósito.** A primeira sprint monta o esqueleto
-> (fatia 0, abaixo). O que está escrito neste README é o **escopo acordado**: o que o
-> produto faz, quais são as entidades e quem entrega o quê. Antes de abrir um card,
-> volte aqui.
+> **O esqueleto já está de pé.** Banco, API e front sobem com os comandos abaixo, e
+> `GET /api/saude` atravessa as quatro camadas de exemplo. A dificuldade deste projeto é
+> modelagem, regra de negócio e trabalho em time — não `tsconfig`. O que está escrito
+> aqui é o **escopo acordado**: o que o produto faz, quais são as entidades e quem
+> entrega o quê. Antes de abrir um card, volte a este arquivo.
 
 ---
 
@@ -47,16 +48,66 @@ O que a turma já usou nos encontros, sem novidade só por novidade:
 
 | Camada | Escolha |
 | --- | --- |
-| API | Node 22+ e Express |
+| API | Node 22+, Express e TypeScript |
 | Banco | PostgreSQL, acessado pelo **Prisma** (schema, migrações e client tipado) |
 | Ambiente | Docker Compose sobe o banco; a API roda em container a partir da sprint de infra |
 | Testes | `node:test` — o runner nativo, o mesmo do kata de TDD |
-| Front | Uma página por tela, consumindo a API. A escolha da biblioteca é decisão da turma na sprint 1 |
+| Front | Next.js 16 (App Router) com React 19, TypeScript e Tailwind |
 
 O Prisma dá o schema num arquivo só, migração versionada e client gerado — mas ele não
 dispensa entender a consulta. Quando uma listagem ficar lenta, ligue
 `log: ['query']` no client e **leia o SQL que ele gerou**. Saber o que o ORM fez por você
 é parte do que está sendo avaliado.
+
+---
+
+## Rodando na sua máquina
+
+Precisa de **Node 22+** e **Docker**.
+
+```bash
+# 1. banco
+docker compose up -d
+
+# 2. API (primeiro terminal)
+cd api
+cp .env.example .env
+npm install
+npm run banco:migrar     # cria as tabelas
+npm run seed             # popula o catálogo
+npm run dev              # http://localhost:3333
+
+# 3. front (segundo terminal)
+cd web
+cp .env.example .env.local
+npm install
+npm run dev              # http://localhost:3000
+```
+
+Abra <http://localhost:3000>. Se aparecer **"API ok · banco ok"** em verde, está tudo
+conectado e você pode pegar a sua fatia.
+
+> O Postgres é publicado na porta **5433** (e não 5432) para não brigar com um Postgres
+> que você já tenha instalado.
+
+Comandos úteis:
+
+| Comando | Onde | O que faz |
+| --- | --- | --- |
+| `npm run checar` | `api/` e `web/` | erros de tipo, sem compilar |
+| `npm run teste` | `api/` | roda os testes (`node:test`, sem framework) |
+| `npm run banco:studio` | `api/` | abre o Prisma Studio para ver os dados |
+| `npm run banco:migrar` | `api/` | aplica mudanças do `schema.prisma` no banco |
+| `docker compose down -v` | raiz | apaga o banco e recomeça do zero |
+
+### Quando algo não sobe
+
+| Sintoma | O que é |
+| --- | --- |
+| `EADDRINUSE :::3000` | já tem coisa na 3000. `npm run dev -- -p 3001` e ajuste a `NEXT_PUBLIC_API_URL` se precisar |
+| `Environment variable not found: DATABASE_URL` | faltou o `cp .env.example .env` dentro de `api/` |
+| `Can't reach database server at localhost:5433` | o container não está de pé: `docker compose up -d` |
+| A tela mostra "API fora do ar" | o `npm run dev` da `api/` não está rodando |
 
 ---
 
@@ -127,7 +178,16 @@ api/src/
 ├── esquemas/        validação da entrada
 ├── middlewares/     autenticação e tratamento de erro
 └── erros/           ErroDeDominio: erro esperado, não é bug
+
+web/src/
+├── servicos/        chamadas à API — nada de `fetch` espalhado nas telas
+├── componentes/     pedaços reaproveitáveis de tela
+└── app/             uma pasta por rota (App Router do Next)
 ```
+
+**`GET /api/saude` é o exemplo completo do caminho**: rota → controlador → serviço →
+repositório → banco, e a tela consumindo. Ele existe para ser copiado. Leia esses cinco
+arquivos antes de escrever o seu primeiro.
 
 Três regras que valem em review:
 
@@ -141,6 +201,11 @@ Três regras que valem em review:
 Erro esperado — livro sem estoque, email já cadastrado — é
 `throw new ErroDeDominio("...", 409)`, e o middleware transforma em resposta HTTP.
 Não encha o controlador de `try/catch`.
+
+E uma pegadinha do Express que custa uma tarde: **handler `async` sempre dentro de
+`envolver()`**. Sem isso, uma promessa rejeitada não chega no tratador de erros e a
+requisição fica pendurada até dar timeout — o cliente não recebe nem `500`. O porquê
+está comentado em `api/src/middlewares/envolver.ts`.
 
 ---
 

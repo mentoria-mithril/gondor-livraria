@@ -1,0 +1,27 @@
+# Sobe só o banco. A API e o front rodam na sua máquina, com `npm run dev`.
+#
+# A porta publicada é a 5433 (e não a 5432) de propósito: assim isto não briga
+# com um PostgreSQL que você já tenha instalado.
+services:
+  banco:
+    image: postgres:16-alpine
+    container_name: gondor-livraria-banco
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: livraria
+      POSTGRES_PASSWORD: livraria
+      POSTGRES_DB: livraria
+    ports:
+      - '5433:5432'
+    volumes:
+      - dados-do-banco:/var/lib/postgresql/data
+    healthcheck:
+      # Sem isto, o container fica "running" antes do Postgres aceitar conexão,
+      # e a primeira migração falha sem motivo aparente.
+      test: ['CMD-SHELL', 'pg_isready -U livraria -d livraria']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  dados-do-banco:
