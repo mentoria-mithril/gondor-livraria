@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express'
-import { ErroDeDominio } from '../erros/ErroDeDominio.js'
+import { ErroDeDominio } from '../errors/ErroDeDominio.js'
 import { ZodError } from 'zod'
 
 /**
