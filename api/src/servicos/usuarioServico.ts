@@ -6,6 +6,7 @@ import {
     type UsuarioPublico,
  } from "../repositorios/usuarioRepositorio.js";
 import { hashSenha } from './senhaServico.js';
+import { Prisma } from '@prisma/client'
 
 type DependenciasCadastro = {
     buscarUsuarioPorEmail: typeof buscarUsuarioPorEmail
@@ -23,6 +24,13 @@ function normalizarEmail(email: string): string {
     return email.trim().toLowerCase();
 }
 
+function conflitoDeEmailUnico(erro: unknown): boolean {
+    return (
+        erro instanceof Prisma.PrismaClientKnownRequestError &&
+        erro.code === 'P2002'
+    );
+}
+
 export async function cadastrarUsuario(
     entrada: CadastroUsuarioEntrada,
     deps: DependenciasCadastro = dependenciasPadrao
@@ -36,9 +44,16 @@ export async function cadastrarUsuario(
 
     const senhaHash = await deps.hashSenha(entrada.senha);
 
-    return deps.criarUsuarioComCarrinho({
-        nome: entrada.nome.trim(),
-        email,
-        senhaHash,
-    });
+    try {
+        return await deps.criarUsuarioComCarrinho({
+            nome: entrada.nome.trim(),
+            email,
+            senhaHash,
+        });
+    } catch (erro) {
+        if (conflitoDeEmailUnico(erro)) {
+            throw new ErroDeDominio('Email já cadastrado.', 409);
+        }
+        throw erro;
+    }
 }
