@@ -1,7 +1,7 @@
 import { buscarCarrinhoUsuario } from "../repositorios/carrinhoRepository.js";
 
-export async function obterCarrinhoUsuario(idUsuario: string) {
-    const carrinho = await buscarCarrinhoUsuario(idUsuario);
+export async function obterCarrinhoUsuario(idUsuario: string, buscarCarrinho = buscarCarrinhoUsuario) {
+    const carrinho = await buscarCarrinho(idUsuario);
 
     if(!carrinho) 
         return {itens: [], total: 0}
