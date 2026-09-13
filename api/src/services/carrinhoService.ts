@@ -1,4 +1,4 @@
-import { buscarCarrinhoUsuario } from "../repositorios/carrinhoRepository.js";
+import { buscarCarrinhoUsuario } from "../repositories/carrinhoRepository.js";
 
 export async function obterCarrinhoUsuario(idUsuario: string, buscarCarrinho = buscarCarrinhoUsuario) {
     const carrinho = await buscarCarrinho(idUsuario);

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { obterCarrinhoUsuarioAtual } from "../controladores/carrinhoController.js";
+import { obterCarrinhoUsuarioAtual } from "../controllers/carrinhoController.js";
 import { envolver } from "../middlewares/envolver.js";
 
 export const carrinhoRoutes = Router()
