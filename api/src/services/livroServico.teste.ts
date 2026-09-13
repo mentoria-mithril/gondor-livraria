@@ -2,9 +2,9 @@ import type {  LivroConsultaResponse, LivroConsultaDTO } from "../types/livro.ty
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-test('serviço de livro retorna livros', async () => {
-    
-    const esperadoQuandoEncontrar: LivroConsultaResponse = {
+test('serviço de livro retorna livros quando há resultados', async () => {
+
+    const esperado: LivroConsultaResponse = {
         value: [
             {
                 id: 1,
@@ -22,21 +22,42 @@ test('serviço de livro retorna livros', async () => {
                 categoria: 'Clássico brasileiro',
                 estoque: 8
             }
-    ],
+        ],
         count: 2
     };
-    const esperadoQuandoNaoEncontrar: LivroConsultaResponse = {
-        value: [],
-        count: 0
-    };
 
-    const montarLivros = async (livros: LivroConsultaDTO[], quantidade: number): Promise<LivroConsultaResponse> => {
+    const montarLivros = async (livros: LivroConsultaDTO[], quantidade: number) => {
+        if (quantidade !== 0) {
+            return {
+                value: livros,
+                count: quantidade
+            };
+        }
         return {
-            value: livros,
-            count: quantidade
+            message: 'Nenhum livro encontrado'
         };
     };
 
-    assert.deepEqual(await montarLivros(esperadoQuandoEncontrar.value, 2), esperadoQuandoEncontrar);
-    assert.deepEqual(await montarLivros([], 0), esperadoQuandoNaoEncontrar);
+    assert.deepEqual(await montarLivros(esperado.value, 2), esperado);
+});
+
+test('serviço de livro retorna mensagem quando não há resultados', async () => {
+
+    const esperado: { message: string } = {
+        message: 'Nenhum livro encontrado',
+    };
+
+    const montarLivros = async (livros: LivroConsultaDTO[], quantidade: number) => {
+        if (quantidade !== 0) {
+            return {
+                value: livros,
+                count: quantidade
+            };
+        }
+        return {
+            message: 'Nenhum livro encontrado'
+        };
+    };
+
+    assert.deepEqual(await montarLivros([], 0), esperado);
 });
