@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { cadastrarUsuario } from '../controladores/usuarioControlador.js';
+import { cadastrarUsuario } from '../controllers/usuarioControlador.js';
 import { envolver } from '../middlewares/envolver.js';
 
 export const usuarioRotas = Router();

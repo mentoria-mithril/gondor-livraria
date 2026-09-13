@@ -1,4 +1,4 @@
-import { bancoRespondendo } from '../repositorios/saudeRepositorio.js'
+import { bancoRespondendo } from '../repositories/saudeRepositorio.js'
 
 export type Saude = {
   status: 'ok' | 'degradado'

@@ -1,10 +1,10 @@
-import { ErroDeDominio } from "../erros/ErroDeDominio.js";
-import type { CadastroUsuarioEntrada } from "../esquemas/usuarioEsquema.js";
+import { ErroDeDominio } from "../errors/ErroDeDominio.js";
+import type { CadastroUsuarioEntrada } from "../schemas/usuarioEsquema.js";
 import { 
     buscarUsuarioPorEmail,
     criarUsuarioComCarrinho,
     type UsuarioPublico,
- } from "../repositorios/usuarioRepositorio.js";
+ } from "../repositories/usuarioRepositorio.js";
 import { hashSenha } from './senhaServico.js';
 import { Prisma } from '@prisma/client'
 

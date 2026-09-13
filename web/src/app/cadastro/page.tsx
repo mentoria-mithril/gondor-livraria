@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, type SubmitEvent } from 'react'
-import { cadastrarUsuario, ErroDaApi } from '@/servicos/api'
+import { cadastrarUsuario, ErroDaApi } from '@/services/api'
 
 export default function PaginaCadastro() {
     const router = useRouter();

@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express'
-import { verificarSaude } from '../servicos/saudeServico.js'
+import { verificarSaude } from '../services/saudeServico.js'
 
 /**
  * Controlador só traduz HTTP: chama o serviço e escolhe o código de resposta.

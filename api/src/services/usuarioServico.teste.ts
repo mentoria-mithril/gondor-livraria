@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ErroDeDominio } from '../erros/ErroDeDominio.js';
+import { ErroDeDominio } from '../errors/ErroDeDominio.js';
 import { cadastrarUsuario } from './usuarioServico.js';
 
 const usuarioFake = {

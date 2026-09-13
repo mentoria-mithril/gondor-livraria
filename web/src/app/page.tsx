@@ -1,4 +1,4 @@
-import { StatusDaApi } from '@/componentes/StatusDaApi'
+import { StatusDaApi } from '@/components/StatusDaApi'
 import Link from 'next/link'
 
 export default function Home() {

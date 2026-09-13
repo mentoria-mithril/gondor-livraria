@@ -1,5 +1,5 @@
 import { criarServidor } from './servidor.js'
-import { prisma } from './repositorios/prisma.js'
+import { prisma } from './repositories/prisma.js'
 
 const PORTA = Number(process.env.PORT) || 3333
 
