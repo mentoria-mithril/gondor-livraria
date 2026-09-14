@@ -1,3 +1,4 @@
+
 export interface LivroConsulta {
     busca?: string,
     categoria?: string,
@@ -13,7 +14,7 @@ export interface LivroConsultaDTO {
     id: number 
     titulo: string,
     autor: string,
-    preco: string,
+    preco: number,
     categoria: string,
     estoque: number
 }

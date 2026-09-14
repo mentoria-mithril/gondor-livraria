@@ -10,7 +10,7 @@ test('serviço de livro retorna livros quando há resultados', async () => {
                 id: 1,
                 titulo: 'Dom Casmurro',
                 autor: 'Machado de Assis',
-                preco: '39.9',
+                preco: 35.0,
                 categoria: 'Clássico brasileiro',
                 estoque: 12
             },
@@ -18,7 +18,7 @@ test('serviço de livro retorna livros quando há resultados', async () => {
                 id: 2,
                 titulo: 'Memórias Póstumas de Brás Cubas',
                 autor: 'Machado de Assis',
-                preco: '42.5',
+                preco: 42.5,
                 categoria: 'Clássico brasileiro',
                 estoque: 8
             }

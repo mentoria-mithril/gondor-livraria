@@ -10,7 +10,7 @@ export async function obterLivros(req: Request, res: Response): Promise<void> {
         pagina: Number.parseInt(req.query.pagina as string) || 1,
   }
 
-  const livros = await buscarLivros(filtros)
+  const livros = await buscarLivros(filtros);
 
   if (livros.count === 0) {
     res.json({ message: 'nenhum livro encontrado' })
