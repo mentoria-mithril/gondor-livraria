@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { obterSaude, type Saude } from '@/servicos/api'
+import { obterSaude, type Saude } from '@/services/api'
 
 type Estado =
   | { fase: 'carregando' }

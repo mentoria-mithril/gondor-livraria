@@ -171,19 +171,23 @@ GET    /api/saude                 API e banco de pé
 
 ```
 api/src/
-├── rotas/           só diz qual URL chama qual controlador
-├── controladores/   entrada e saída de HTTP. Sem regra de negócio.
-├── servicos/        ← a regra de negócio mora aqui
-├── repositorios/    único lugar que importa o Prisma
-├── esquemas/        validação da entrada
+├── routes/          só diz qual URL chama qual controlador
+├── controllers/     entrada e saída de HTTP. Sem regra de negócio.
+├── services/        ← a regra de negócio mora aqui
+├── repositories/    único lugar que importa o Prisma
+├── schemas/         validação da entrada
 ├── middlewares/     autenticação e tratamento de erro
-└── erros/           ErroDeDominio: erro esperado, não é bug
+└── errors/          ErroDeDominio: erro esperado, não é bug
 
 web/src/
-├── servicos/        chamadas à API — nada de `fetch` espalhado nas telas
-├── componentes/     pedaços reaproveitáveis de tela
+├── services/        chamadas à API — nada de `fetch` espalhado nas telas
+├── components/      pedaços reaproveitáveis de tela
 └── app/             uma pasta por rota (App Router do Next)
 ```
+
+> **Pasta em inglês, código em português.** Os diretórios seguem a convenção que você
+> vai encontrar em qualquer projeto Node (`routes`, `controllers`, `services`); o que está
+> dentro deles — função, variável, comentário, commit — continua em português.
 
 **`GET /api/saude` é o exemplo completo do caminho**: rota → controlador → serviço →
 repositório → banco, e a tela consumindo. Ele existe para ser copiado. Leia esses cinco

@@ -1,6 +1,6 @@
 import express from 'express'
 import cors from 'cors'
-import { rotas } from './rotas/index.js'
+import { rotas } from './routes/index.js'
 import { tratadorDeErros } from './middlewares/tratadorDeErros.js'
 import { rotaNaoEncontrada } from './middlewares/rotaNaoEncontrada.js'
 

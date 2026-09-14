@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { salvarItemCarrinho } from '../controladores/carrinhoControlador.js';
+import { salvarItemCarrinho } from '../controllers/carrinhoControlador.js';
 import { envolver } from '../middlewares/envolver.js';
 
 export const carrinhoRotas = Router();

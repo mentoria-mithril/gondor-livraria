@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
-import * as carrinhoServico from '../servicos/carrinhoServico.js'
+import * as carrinhoServico from '../services/carrinhoServico.js'
 import { AdicionarItemCarrinhoDto } from '../dtos/itemCarrinhoDto.js';
-import { ErroDeDominio } from '../erros/ErroDeDominio.js';
+import { ErroDeDominio } from '../errors/ErroDeDominio.js';
 
 
 export const salvarItemCarrinho = async (req: Request, res: Response) => {

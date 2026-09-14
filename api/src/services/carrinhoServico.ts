@@ -1,7 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import type { AdicionarItemCarrinhoDto } from '../dtos/itemCarrinhoDto.js';
-import { prisma } from '../repositorios/prisma.js';
-import { ErroDeDominio } from '../erros/ErroDeDominio.js';
+import { prisma } from '../repositories/prisma.js';
+import { ErroDeDominio } from '../errors/ErroDeDominio.js';
 
 
 export const adicionarItemCarrinho = async (usuarioId: string, dados: AdicionarItemCarrinhoDto) => {
