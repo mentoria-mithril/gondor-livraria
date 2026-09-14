@@ -7,6 +7,8 @@
  *   listarLivros(), obterCarrinho(), fecharPedido()...
  */
 
+import { LivroResponse } from "@/types/livro.type"
+
 const URL_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api'
 
 /** Erro que a API devolveu com uma mensagem — dá para mostrar na tela. */
@@ -46,4 +48,16 @@ export type Saude = {
 
 export function obterSaude(): Promise<Saude> {
   return chamar<Saude>('/saude')
+}
+
+export function listarLivros(busca?: string, categoria?: string, pagina = 1): Promise<LivroResponse> {
+  const parametros = new URLSearchParams({ pagina: String(pagina) })
+
+  if (busca || categoria) {
+      if (busca) parametros.set('busca', busca)
+      if (categoria) parametros.set('categoria', categoria)
+  }
+
+  return chamar<LivroResponse>(`/livros?${parametros.toString()}`)
+
 }
