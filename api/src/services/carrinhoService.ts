@@ -1,10 +1,10 @@
 import type { Prisma } from '@prisma/client';
-import type { AdicionarItemCarrinhoDto } from '../dtos/itemCarrinhoDto.js';
+import type { AdicionarItemCarrinhoDto } from '../schemas/carrinhoSchema.js';
 import { prisma } from '../repositories/prisma.js';
 import { ErroDeDominio } from '../errors/ErroDeDominio.js';
 
 
-export const adicionarItemCarrinho = async (usuarioId: string, dados: AdicionarItemCarrinhoDto) => {
+export const salvarItem = async (usuarioId: string, dados: AdicionarItemCarrinhoDto) => {
     return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const livro = await tx.livro.findUnique({ where: { id: dados.livroId } })
 
@@ -25,3 +25,14 @@ export const adicionarItemCarrinho = async (usuarioId: string, dados: AdicionarI
         })
     });
 }
+
+export const deletarItem = async (usuarioId: string, livroId: number) => {
+        const removeItemCarrinho = await prisma.itemCarrinho.deleteMany({
+            where: { livroId, carrinho: { usuarioId } },
+        })
+        if(removeItemCarrinho.count === 0)throw new ErroDeDominio('Item não está no carrinho', 404);
+        
+    }
+    
+
+
