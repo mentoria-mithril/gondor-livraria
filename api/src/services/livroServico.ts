@@ -1,6 +1,11 @@
-import { LivroConsulta, LivroConsultaResponse } from "../types/livro.type.js";
-import { livroConsultaSchema } from "../schemas/livroSchema.js";
-import { buscarLivrosPorFiltros, quantidadeTotalLivrosPorFiltros } from "../repositories/livroRepositorio.js";
+import {LivroConsulta, LivroConsultaResponse, LivroResponseDTO} from "../types/livro.type.js";
+import { livroConsultaSchema, livroIdSchema } from "../schemas/livroSchema.js";
+import {
+    buscarLivroPorId,
+    buscarLivrosPorFiltros,
+    quantidadeTotalLivrosPorFiltros
+} from "../repositories/livroRepositorio.js";
+import {ErroDeDominio} from "../errors/ErroDeDominio.js";
 
 export async function buscarLivros(filtros: LivroConsulta): Promise<LivroConsultaResponse> {
 
@@ -21,4 +26,13 @@ export async function buscarLivros(filtros: LivroConsulta): Promise<LivroConsult
         value: livrosResponse,
         count: quantidadeTotal
     };
+}
+
+export async function buscarLivro(id: unknown): Promise<LivroResponseDTO> {
+    const idValidado = livroIdSchema.parse(id);
+    const livro = await buscarLivroPorId(idValidado)
+    if (!livro) {
+        throw new ErroDeDominio('Livro não encontrado! Tente novamente.', 404)
+    }
+    return livro;
 }

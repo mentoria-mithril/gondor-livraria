@@ -19,6 +19,17 @@ export interface LivroConsultaDTO {
     estoque: number
 }
 
+export interface LivroResponseDTO {
+    id: number,
+    titulo: string,
+    autor: string,
+    categoria: string,
+    sinopse: string,
+    preco: number,
+    estoque: number,
+    dtCriacao: string
+}
+
 export interface LivroConsultaResponse {
     value: LivroConsultaDTO[],
     count: number
