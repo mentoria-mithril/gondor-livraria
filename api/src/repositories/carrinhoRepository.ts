@@ -24,3 +24,23 @@ export async function buscarCarrinhoUsuario(idUsuario: string) {
         }
     });
 }
+
+export async function buscarEstoqueItem(idDoItem: string) {
+        return prisma.itemCarrinho.findUnique({
+            where: {
+                id: idDoItem
+            },
+            include:{
+                livro: true
+            }
+
+        })
+}
+
+export async function atualizarQuantidadeItem(idDoItem: string, novaQuantidade:number) {
+    return prisma.itemCarrinho.update({
+        where: {id: idDoItem},
+        data: {quantidade: novaQuantidade}
+    });
+    
+}

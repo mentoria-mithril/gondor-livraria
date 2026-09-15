@@ -1,4 +1,8 @@
-import { buscarCarrinhoUsuario } from "../repositories/carrinhoRepository.js";
+import { id } from "zod/v4/locales";
+import { atualizarQuantidadeItem, buscarCarrinhoUsuario, buscarEstoqueItem } from "../repositories/carrinhoRepository.js";
+import { ErroDeDominio } from "../errors/ErroDeDominio.js";
+import { error } from "console";
+import { Carrinho, ItemCarrinho } from "@prisma/client";
 
 export async function obterCarrinhoUsuario(idUsuario: string, buscarCarrinho = buscarCarrinhoUsuario) {
     const carrinho = await buscarCarrinho(idUsuario);
@@ -42,4 +46,49 @@ function calcularTotal(itens: {subtotal: number}[]): number {
     const total = itens.reduce((acumulado, itemAtual) => acumulado + itemAtual.subtotal,0)
 
     return total;
+}
+
+/**
+ * validar (fast fail) <= 0 erro 400
+ * buscar carrinho do usuario
+ * validar se o carrinho é do usuario
+ * buscar item no banco
+ * validar de o item existe 
+ * validar se a nova quantidade é maior que o existe no estoque (409)]\
+ * salvar no banco
+ */
+
+export async function atualizarQuantidadeItemCarrinho(idUsuario: string, idDoItem: string, novaQuantidade: number) {
+    if(novaQuantidade <= 0) 
+        throw new ErroDeDominio("Quantidade deve ser maior que zero", 400);
+
+    const item = await buscarEstoqueItem(idDoItem);
+    const carrinhoUsuario = await buscarCarrinhoUsuario(idUsuario);
+    
+    validarRegrasCarrinho(novaQuantidade, carrinhoUsuario, item);
+
+    const itemAtualizado = await atualizarQuantidadeItem(idDoItem,novaQuantidade)
+
+    return itemAtualizado;
+}
+
+function verificaCarrinhoUsuario(carrinhoUsuario: Carrinho | null){
+    if(!carrinhoUsuario)
+        throw new ErroDeDominio("Carrinho não encontrado", 404);
+}
+
+function verificaItemExiste(item: ItemCarrinho, idDoCarrinho: string){
+    if(!item || item.carrinhoId !== idDoCarrinho)
+        throw new ErroDeDominio("Item não existetente", 404);
+}
+
+function verificaQntEstoque(novaQuantidade: number, estoqueDoLivro: number){
+    if(novaQuantidade > estoqueDoLivro)
+        throw new ErroDeDominio("Quantidade não disponivel", 409)
+}
+
+function validarRegrasCarrinho(novaQuantidade: number, carrinhoUsuario: any, item: any) {
+    verificaCarrinhoUsuario(carrinhoUsuario);
+    verificaItemExiste(item, carrinhoUsuario.id);
+    verificaQntEstoque(novaQuantidade, item.livro.estoque);    
 }
