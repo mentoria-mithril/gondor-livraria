@@ -7,7 +7,7 @@
  *   listarLivros(), obterCarrinho(), fecharPedido()...
  */
 
-import { LivroResponse } from "@/types/livro.type"
+import {LivroDetalheDTO, LivroResponse} from "@/types/livro.type"
 
 const URL_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api'
 
@@ -59,5 +59,11 @@ export function listarLivros(busca?: string, categoria?: string, pagina = 1): Pr
   }
 
   return chamar<LivroResponse>(`/livros?${parametros.toString()}`)
+
+}
+
+export function obterLivroDetalhe(id: string): Promise<LivroDetalheDTO> {
+
+  return chamar<LivroDetalheDTO>(`/livros/${id}`)
 
 }
