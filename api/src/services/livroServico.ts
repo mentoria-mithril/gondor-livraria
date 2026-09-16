@@ -1,4 +1,4 @@
-import {LivroConsulta, LivroConsultaResponse, LivroResponseDTO} from "../types/livro.type.js";
+import {LivroConsulta, LivroConsultaResponse, LivroDetalheDTO} from "../types/livro.type.js";
 import { livroConsultaSchema, livroIdSchema } from "../schemas/livroSchema.js";
 import {
     buscarLivroPorId,
@@ -28,7 +28,7 @@ export async function buscarLivros(filtros: LivroConsulta): Promise<LivroConsult
     };
 }
 
-export async function buscarLivro(id: unknown): Promise<LivroResponseDTO> {
+export async function buscarLivro(id: unknown): Promise<LivroDetalheDTO> {
     const idValidado = livroIdSchema.parse(id);
     const livro = await buscarLivroPorId(idValidado)
     if (!livro) {
