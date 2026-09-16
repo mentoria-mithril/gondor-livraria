@@ -61,6 +61,19 @@ export type CadastroUsuarioEntrada = {
   senha: string
 }
 
+export type LoginUsuarioEntrada = {
+  email: string
+  senha: string
+}
+
+
+export function autenticarUsuario(dados: LoginUsuarioEntrada): Promise<UsuarioPublico> {
+  return chamar<UsuarioPublico>('/login', {
+    method: 'POST',
+    body: JSON.stringify(dados),
+  });
+}
+
 export function cadastrarUsuario(dados: CadastroUsuarioEntrada): Promise<UsuarioPublico> {
   return chamar<UsuarioPublico>('/usuarios', {
     method: 'POST',
