@@ -5,7 +5,7 @@ import { AdicionarItemCarrinhoDto, RemoverItemCarrinhoDto } from '../schemas/car
 import { ErroDeDominio } from '../errors/ErroDeDominio.js';
 
 
-export const salvarItemCarrinho = async (req: Request, res: Response) => {
+export async function salvarItemCarrinho(req: Request, res: Response) {
     
     const usuarioId = req.header('x-usuario-id');
     if (!usuarioId) throw new ErroDeDominio('Informe o header x-usuario-id.', 401);
@@ -15,7 +15,7 @@ export const salvarItemCarrinho = async (req: Request, res: Response) => {
     res.status(201).json(item);
 }
 
-export const removerItemCarrinho = async (req: Request, res: Response) => {
+export async function removerItemCarrinho(req: Request, res: Response) {
     const usuarioId = req.header('x-usuario-id');
     if (!usuarioId) throw new ErroDeDominio('Informe o header x-usuario-id.', 401);
 

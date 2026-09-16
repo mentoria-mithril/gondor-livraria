@@ -6,4 +6,4 @@ export const carrinhoRotas = Router();
 
 
 carrinhoRotas.post('/carrinho/itens', envolver(salvarItemCarrinho));
-carrinhoRotas.delete('/carrinho/itens:livroId', envolver(removerItemCarrinho))
+carrinhoRotas.delete('/carrinho/itens/:livroId', envolver(removerItemCarrinho))
