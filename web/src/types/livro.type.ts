@@ -12,3 +12,8 @@ export interface LivroConsultaDTO {
     categoria: string;
     estoque: number;
 }
+
+export interface LivroDetalheDTO extends LivroConsultaDTO {
+    sinopse: string;
+    dtCriacao: string;
+}
