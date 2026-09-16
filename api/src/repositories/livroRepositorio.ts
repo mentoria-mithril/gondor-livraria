@@ -1,5 +1,5 @@
 import { prisma } from "./prisma.js";
-import type {LivroConsulta, LivroConsultaQuantidade, LivroConsultaDTO, LivroResponseDTO} from "../types/livro.type.js";
+import type {LivroConsulta, LivroConsultaQuantidade, LivroConsultaDTO, LivroDetalheDTO} from "../types/livro.type.js";
 
 export async function buscarLivrosPorFiltros({ busca, categoria, pagina }: LivroConsulta): Promise<LivroConsultaDTO[]> {
     const buscaParam = busca?.trim() || null;
@@ -59,7 +59,7 @@ export async function quantidadeTotalLivrosPorFiltros({ busca, categoria }: Livr
     return Number(response[0]?.count ?? 0);
 }
 
-export async function buscarLivroPorId(id: number): Promise<LivroResponseDTO | null> {
+export async function buscarLivroPorId(id: number): Promise<LivroDetalheDTO | null> {
     const livro = await prisma.livro.findUnique({where: {id}, select: {
         id: true,
         titulo: true,
