@@ -1,42 +1,93 @@
-import { StatusDaApi } from '@/components/StatusDaApi'
+'use client'
+
+import { useState } from 'react'
+import { ShoppingCart } from 'lucide-react'
+
+import { AppSidebar } from '@/components/layout/Sidebar'
+import { Button } from '@/components/ui/button'
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { LIVROS_MOCK } from '@/mocks/livros'
+import type { ItemCarrinho, Livro } from '@/types/carrinho/CarrinhoTypes'
+
+/**
+ * HOME MOCKADA — tela de teste.
+ *
+ * Não fala com a API: os livros vêm de `@/mocks/livros` e o carrinho vive em
+ * memória. Serve para exercitar Sidebar + CarrinhoItem enquanto o
+ * `GET /carrinho/itens` não existe.
+ *
+ * Quando a API entrar, só ESTE arquivo muda: `useState` vira `useEffect` +
+ * fetch, e as três funções abaixo viram chamadas ao backend. Sidebar e
+ * CarrinhoItem ficam intactos — é para isso que eles são controlados.
+ */
+
+const formatador = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+})
 
 export default function Home() {
+  // O estado mora AQUI porque dois filhos precisam dele: a lista adiciona,
+  // a sidebar exibe. O dono é o pai comum.
+  const [itens, setItens] = useState<ItemCarrinho[]>([])
+
+  function adicionar(livro: Livro) {
+    // Forma de função (`atuais => ...`): garante que você parte do estado
+    // mais recente, não de um valor capturado no render anterior.
+    setItens((atuais) => {
+      const jaEstaNoCarrinho = atuais.some((item) => item.livroId === livro.id)
+
+      // Mesma regra do back: livro repetido SOMA quantidade, não duplica
+      // linha — é o @@unique([carrinhoId, livroId]) do schema.prisma.
+      if (jaEstaNoCarrinho) {
+        return atuais.map((item) =>
+          item.livroId === livro.id
+            ? { ...item, quantidade: item.quantidade + 1 }
+            : item,
+        )
+      }
+
+      return [...atuais, { livroId: livro.id, quantidade: 1, livro }]
+    })
+  }
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-16">
-      <header>
-        <h1 className="text-3xl font-semibold tracking-tight">Livraria</h1>
-        <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-          Esqueleto do projeto da turma Gondor. Se o quadro abaixo estiver verde, o
-          ambiente está inteiro e você pode pegar a sua fatia.
-        </p>
-      </header>
+    <SidebarProvider>
+      <AppSidebar itens={itens} />
 
-      <StatusDaApi />
+      <SidebarInset>
+        <header className='flex items-center h-14 px-4 border-b border-border md:hidden'>
+          <SidebarTrigger className="md:hidden" />
+        </header>
+        <main className="p-6">
+          <h1 className="font-heading mb-1 text-2xl">Catálogo (mock)</h1>
+          <p className="mb-6 text-sm text-muted-foreground">
+            Tela de teste — dados falsos, carrinho só em memória.
+          </p>
 
-      <section>
-        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">
-          O que cada dupla constrói aqui
-        </h2>
-        <ul className="mt-3 space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
-          <li>
-            <strong>Fatia A — Conta</strong> · cadastro, login e autenticação
-          </li>
-          <li>
-            <strong>Fatia B — Catálogo</strong> · busca, filtro, paginação e detalhe
-          </li>
-          <li>
-            <strong>Fatia C — Carrinho</strong> · adicionar, somar, alterar e remover
-          </li>
-          <li>
-            <strong>Fatia D — Pedido</strong> · checkout, estoque e histórico
-          </li>
-        </ul>
-      </section>
+          <ul className="flex flex-col gap-3">
+            {LIVROS_MOCK.map((livro) => (
+              <li
+                key={livro.id}
+                className="flex items-center justify-between gap-4 border border-border p-4"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{livro.titulo}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {livro.autor} · {livro.categoria}
+                  </p>
+                  <p className="mt-1 text-sm">{formatador.format(Number(livro.preco))}</p>
+                </div>
 
-      <footer className="text-sm text-zinc-500">
-        O escopo completo, o modelo de dados e os critérios de aceite estão no{' '}
-        <code className="font-mono">README.md</code> e nas issues do repositório.
-      </footer>
-    </main>
+                <Button onClick={() => adicionar(livro)} className="shrink-0">
+                  <ShoppingCart />
+                  Adicionar
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
