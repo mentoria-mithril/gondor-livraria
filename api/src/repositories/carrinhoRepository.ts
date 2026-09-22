@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import type { Prisma } from '@prisma/client'
 import { prisma } from './prisma.js'
 
@@ -46,8 +45,6 @@ export async function removerItemDoCarrinho(
   })
   return count
 }
-=======
-import { prisma } from "./prisma.js";
 /*
     Função para buscar o carrinho de um usuário.
     primeiro pego o id do usuario,
@@ -93,4 +90,3 @@ export async function atualizarQuantidadeItem(idDoItem: string, novaQuantidade:n
     });
     
 }
->>>>>>> feat/16-patch-carrinho
