@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { Prisma } from '@prisma/client'
-import { obterCarrinhoUsuario } from './carrinhoService.js'
+import { obterCarrinhoUsuario } from './cartService.js'
 
 /**
  * Testa o serviço sem banco: a busca do carrinho é injetada como segundo

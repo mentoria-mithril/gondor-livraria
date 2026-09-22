@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { salvarItemCarrinho, removerItemCarrinho } from '../controllers/carrinhoController.js';
+import { salvarItemCarrinho, removerItemCarrinho } from '../controllers/cartController.js';
 import { envolver } from '../middlewares/envolver.js';
-import { atualizarQntItem, obterCarrinhoUsuarioAtual } from "../controllers/carrinhoController.js";
+import { atualizarQntItem, obterCarrinhoUsuarioAtual } from "../controllers/cartController.js";
 
 export const carrinhoRotas = Router();
 

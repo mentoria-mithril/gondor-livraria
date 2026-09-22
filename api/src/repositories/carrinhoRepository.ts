@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client'
 import { prisma } from './prisma.js'
-
+import type { CarrinhoDoUsuario } from '../services/cartService.js'
 
 type ClientePrisma = Prisma.TransactionClient
 
@@ -89,4 +89,24 @@ export async function atualizarQuantidadeItem(idDoItem: string, novaQuantidade:n
         data: {quantidade: novaQuantidade}
     });
     
+}
+
+export async function obterCarrinho(idUsuario:string): Promise<CarrinhoDoUsuario | null> {
+  const carrinho = await prisma.carrinho.findUnique({
+    where: {usuarioId: idUsuario},
+    include: {itens: {include:{livro:true}}}
+  })
+  if(!carrinho) return null
+
+    return {
+    itens: carrinho.itens.map(i => ({
+      id: i.id,
+      livroId: i.livroId,
+      titulo: i.livro.titulo,
+      precoUnitario: i.livro.preco.toNumber(),
+      quantidade: i.quantidade,
+      subtotal: i.livro.preco.toNumber() * i.quantidade,
+    })),
+    total: 0
+  }
 }

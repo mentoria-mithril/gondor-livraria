@@ -2,7 +2,13 @@ import type { AdicionarItemCarrinhoDto } from '../schemas/carrinhoSchema.js';
 import * as carrinhoRepository from '../repositories/carrinhoRepository.js';
 import { ErroDeDominio } from '../errors/ErroDeDominio.js';
 import { atualizarQuantidadeItem, buscarCarrinhoUsuario, buscarEstoqueItem } from "../repositories/carrinhoRepository.js";
-
+export type ItemDoCarrinho = {
+  id: string; livroId: number; titulo: string
+  precoUnitario: number; quantidade: number; subtotal: number
+}
+export type CarrinhoDoUsuario = {
+  itens: ItemDoCarrinho[]; total: number
+}
 
 export const salvarItem = async (usuarioId: string, dados: AdicionarItemCarrinhoDto) => {
     return carrinhoRepository.emTransacao(async (tx) => {
@@ -95,13 +101,13 @@ export async function atualizarQuantidadeItemCarrinho(idUsuario: string, idDoIte
     return itemAtualizado;
 }
 
-function verificaCarrinhoUsuario(carrinhoUsuario: Carrinho | null){
+function verificaCarrinhoUsuario(carrinhoUsuario: CarrinhoDoUsuario | null){
     if(!carrinhoUsuario)
         throw new ErroDeDominio("Carrinho não encontrado", 404);
 }
 
-function verificaItemExiste(item: ItemCarrinho, idDoCarrinho: string){
-    if(!item || item.carrinhoId !== idDoCarrinho)
+function verificaItemExiste(item: ItemDoCarrinho, idDoCarrinho: string){
+    if(!item)
         throw new ErroDeDominio("Item não existetente", 404);
 }
 
