@@ -3,13 +3,9 @@ import { salvarItemCarrinho, removerItemCarrinho } from '../controllers/cartCont
 import { envolver } from '../middlewares/envolver.js';
 import { atualizarQntItem, obterCarrinhoUsuarioAtual } from "../controllers/cartController.js";
 
-export const carrinhoRotas = Router();
+export const cartRoutes = Router()
 
-carrinhoRotas.post('/carrinho/itens', envolver(salvarItemCarrinho));
-carrinhoRotas.delete('/carrinho/itens/:livroId', envolver(removerItemCarrinho))
-
-
-export const carrinhoRoutes = Router()
-
-carrinhoRoutes.get('/carrinho', envolver(obterCarrinhoUsuarioAtual))
-carrinhoRoutes.patch('/carrinho/itens/:id',envolver(atualizarQntItem));
+cartRoutes.post('/carrinho/itens', envolver(salvarItemCarrinho));
+cartRoutes.delete('/carrinho/itens/:livroId', envolver(removerItemCarrinho))
+cartRoutes.get('/carrinho', envolver(obterCarrinhoUsuarioAtual))
+cartRoutes.patch('/carrinho/itens/:id',envolver(atualizarQntItem));
