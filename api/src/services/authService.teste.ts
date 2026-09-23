@@ -1,7 +1,7 @@
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
 import { ErroDeDominio } from '../errors/ErroDeDominio.js'
-import { autenticarUsuario } from './authServico.js'
+import { autenticarUsuario } from './authService.js'
 
 
 const usuarioComSenhaFake = {
