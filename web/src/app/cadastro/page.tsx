@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, type SubmitEvent } from 'react'
-import { cadastrarUsuario, ErroDaApi } from '@/services/api'
+import { registerUser, ErroDaApi } from '@/services/api'
 
 export default function PaginaCadastro() {
     const router = useRouter();
@@ -19,7 +19,7 @@ export default function PaginaCadastro() {
         setEnviando(true);
 
         try {
-            await cadastrarUsuario({ nome, email, senha });
+            await registerUser({ nome, email, senha });
             router.push('/login');
         } catch (e) {
             if (e instanceof ErroDaApi) {
