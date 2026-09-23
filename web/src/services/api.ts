@@ -47,3 +47,23 @@ export type Saude = {
 export function obterSaude(): Promise<Saude> {
   return chamar<Saude>('/saude')
 }
+
+export type PublicUser = {
+  id: string
+  nome: string
+  email: string
+  dtCriacao: string
+}
+
+export type RegisterUserInput = {
+  nome: string
+  email: string
+  senha: string
+}
+
+export function registerUser(data: RegisterUserInput): Promise<PublicUser> {
+  return chamar<PublicUser>('/usuarios', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
