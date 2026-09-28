@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { loginUsuarioEsquema } from '../schemas/usuarioEsquema.js';
+import { loginUsuarioEsquema } from '../schemas/authEsquema.js';
 import { autenticarUsuario as authService } from '../services/authService.js'
 
 export async function autenticarUsuario(req: Request, res: Response): Promise<void> {

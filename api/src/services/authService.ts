@@ -1,5 +1,5 @@
 import { ErroDeDominio } from "../errors/ErroDeDominio.js";
-import type { loginUsuarioEntrada } from "../schemas/usuarioEsquema.js";
+import type { loginUsuarioEntrada } from "../schemas/authEsquema.js";
 import type { UsuarioPublico } from "../repositories/usuarioRepositorio.js";
 import { buscarUsuarioParaAutenticacao } from "../repositories/authRepository.js";
 import {compararSenha} from './senhaServico.js';
