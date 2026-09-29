@@ -1,11 +1,12 @@
 import { Router } from 'express';
-import { salvarItemCarrinho, removerItemCarrinho } from '../controllers/cartController.js';
+import * as cartController from '../controllers/cartController.js'
 import { envolver } from '../middlewares/envolver.js';
-import { atualizarQntItem, obterCarrinhoUsuarioAtual } from "../controllers/cartController.js";
+
 
 export const cartRoutes = Router()
 
-cartRoutes.post('/carrinho/itens', envolver(salvarItemCarrinho));
-cartRoutes.delete('/carrinho/itens/:livroId', envolver(removerItemCarrinho))
-cartRoutes.get('/carrinho', envolver(obterCarrinhoUsuarioAtual))
-cartRoutes.patch('/carrinho/itens/:id',envolver(atualizarQntItem));
+
+cartRoutes.get('/cart', envolver(cartController.getCart))
+cartRoutes.post('/cart/items', envolver(cartController.addItem));
+cartRoutes.patch('/cart/items/:itemId', envolver(cartController.updateItemQuantity));
+cartRoutes.delete('/cart/items/:itemId', envolver(cartController.removeItem))

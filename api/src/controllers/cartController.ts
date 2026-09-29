@@ -1,43 +1,49 @@
 import type { Request, Response } from 'express';
-import * as carrinhoService from '../services/cartService.js'
-import { AdicionarItemCarrinhoDto, RemoverItemCarrinhoDto } from '../schemas/carrinhoSchema.js';
+import * as cartService from '../services/cartService.js'
+import { AddItemBody, ItemIdParams, UpdateQuantityBody, UserIdHeader } from '../schemas/cartSchema.js';
 import { ErroDeDominio } from '../errors/ErroDeDominio.js';
 
+/**
+ * Um lugar só para descobrir quem é o usuário. Quando a fatia A (autenticação)
+ * terminar, isto vira `req.user.id` e nenhum handler muda.
+ *
+ * ponytail: o header é declarado pelo cliente — qualquer um pode se passar por
+ * outro usuário. Aceitável só até a fatia A trocar por JWT.
+ */
+function requireUserId(req: Request): string {
+    const parsed = UserIdHeader.safeParse(req.header('x-user-id'));
+    if (!parsed.success) throw new ErroDeDominio('Informe um header x-user-id válido.', 401);
+    return parsed.data;
+}
 
-export async function salvarItemCarrinho(req: Request, res: Response) {
-    
-    const usuarioId = req.header('x-usuario-id');
-    if (!usuarioId) throw new ErroDeDominio('Informe o header x-usuario-id.', 401);
+export async function addItem(req: Request, res: Response): Promise<void> {
+    const userId = requireUserId(req);
+    const body = AddItemBody.parse(req.body);
 
-    const dados = AdicionarItemCarrinhoDto.parse(req.body);
-    const item = await carrinhoService.salvarItem(usuarioId, dados)
+    const item = await cartService.addItem(userId, body)
     res.status(201).json(item);
 }
 
-export async function removerItemCarrinho(req: Request, res: Response) {
-    const usuarioId = req.header('x-usuario-id');
-    if (!usuarioId) throw new ErroDeDominio('Informe o header x-usuario-id.', 401);
+export async function getCart(req: Request, res: Response): Promise<void> {
+    const userId = requireUserId(req);
 
-    const {livroId} = RemoverItemCarrinhoDto.parse(req.params)
-    await carrinhoService.deletarItem(usuarioId, livroId);
+    const cart = await cartService.getCart(userId);
+    res.status(200).json(cart)
+}
+
+export async function updateItemQuantity(req: Request, res: Response): Promise<void> {
+    const userId = requireUserId(req);
+    const {itemId} = ItemIdParams.parse(req.params);
+    const {quantity} = UpdateQuantityBody.parse(req.body);
+
+    const updatedItem = await cartService.updateItemQuantity(userId, itemId, quantity);
+    res.status(200).json(updatedItem);
+}
+
+export async function removeItem(req: Request, res: Response): Promise<void> {
+    const userId = requireUserId(req);
+    const {itemId} = ItemIdParams.parse(req.params);
+
+    await cartService.removeItem(userId, itemId);
     res.status(204).send();
-    
-}
-
-export async function obterCarrinhoUsuarioAtual(_req: Request,res: Response):Promise<void> {
-    const idUsuario = "19f72583-ba26-4e15-993c-7d2d5e848190"; //TODO Trocar pelo id verdadeiro quando a fatia A
-    //de autenticação for terminada
-    const carrinho = await carrinhoService.obterCarrinhoUsuario(idUsuario);
-    res.status(200).json(carrinho)
-}
-
-export async function atualizarQntItem(req: Request, res: Response):Promise<void> {
-    const idUsuario = "19f72583-ba26-4e15-993c-7d2d5e848190"; //TODO Trocar pelo id verdadeiro quando a fatia A
-
-    const idDoItem = req.params.id || "";
-
-    const novaQuantidade = req.body.quantidade;
-
-    const itemAtualizado = await carrinhoService.atualizarQuantidadeItemCarrinho(idUsuario, idDoItem, novaQuantidade);
-    res.status(200).json(itemAtualizado);
 }

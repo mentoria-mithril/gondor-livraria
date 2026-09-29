@@ -1,123 +1,104 @@
-import type { AdicionarItemCarrinhoDto } from '../schemas/carrinhoSchema.js';
-import * as carrinhoRepository from '../repositories/carrinhoRepository.js';
+import { Prisma } from '@prisma/client';
+import type { AddItemBody } from '../schemas/cartSchema.js';
+import * as cartRepository from '../repositories/cartRepository.js';
+import type { CartItem } from '../repositories/cartRepository.js';
 import { ErroDeDominio } from '../errors/ErroDeDominio.js';
-import { atualizarQuantidadeItem, buscarCarrinhoUsuario, buscarEstoqueItem } from "../repositories/carrinhoRepository.js";
-export type ItemDoCarrinho = {
-  id: string; livroId: number; titulo: string
-  precoUnitario: number; quantidade: number; subtotal: number
-}
-export type CarrinhoDoUsuario = {
-  itens: ItemDoCarrinho[]; total: number
-}
 
-export const salvarItem = async (usuarioId: string, dados: AdicionarItemCarrinhoDto) => {
-    return carrinhoRepository.emTransacao(async (tx) => {
-        const livro = await carrinhoRepository.buscarLivroPorId(tx, dados.livroId)
 
-        if (!livro) throw new ErroDeDominio('Livro não encontrado.', 404)
-        if (livro.estoque < dados.quantidade) throw new ErroDeDominio('Estoque insuficiente.', 409)
-
-        const carrinho = await carrinhoRepository.garantirCarrinhoDoUsuario(tx, usuarioId)
-
-        return carrinhoRepository.somarQuantidadeDoItem(
-            tx,
-            carrinho.id,
-            dados.livroId,
-            dados.quantidade,
-        )
-    });
+export type CartDeps = {
+    userExists: typeof cartRepository.userExists
+    getBookById: typeof cartRepository.getBookById
+    addItemToCart: typeof cartRepository.addItemToCart
+    findCartItemsByUserId: typeof cartRepository.findCartItemsByUserId
+    findCartItemOfUser: typeof cartRepository.findCartItemOfUser
+    updateItemQuantity: typeof cartRepository.updateItemQuantity
+    deleteItemFromCart: typeof cartRepository.deleteItemFromCart
 }
 
-export const deletarItem = async (usuarioId: string, livroId: number) => {
-    const itensRemovidos = await carrinhoRepository.removerItemDoCarrinho(usuarioId, livroId)
-    if (itensRemovidos === 0) throw new ErroDeDominio('Item não está no carrinho', 404);
+const defaultDeps: CartDeps = { ...cartRepository }
+
+export type CartItemResponse = {
+    id: string,
+    bookId: number,
+    title: string,
+    unitPrice: number,
+    quantity: number,
+    subtotal: number
 }
 
-export async function obterCarrinhoUsuario(idUsuario: string, buscarCarrinho = buscarCarrinhoUsuario) {
-    const carrinho = await buscarCarrinho(idUsuario);
-
-    if(!carrinho) 
-        return {itens: [], total: 0}
-
-
-
-//pegar de carrinho titulo, preço, calcular subtotal a cada linha e o total
-/*
-pego o carrinho LEMBRAR DE RENOMAR A VARIAVEL DO .MAP PARA itens e do .reduce para total
-depois transformo para pegar titulo, preço (já convertento para number)
-calculo preco do item X quantidade do item
-uso reduce() para somar o acumulador + valorAtual a cada rodada do array
-
-depois retorno {itens(.map()), total(.reduce())};
-
-*/
-    const itens = carrinho.itens.map((item)=>{
-        const tituloLivro = item.livro.titulo;
-        const precoItem = item.livro.preco.toNumber();
-        const subtotalCompra = precoItem * item.quantidade;
-        
-        return{
-            id: item.id,
-            livroId: item.livroId,
-            titulo: tituloLivro,
-            quantidade: item.quantidade,
-            subtotal: subtotalCompra,
-            precoUnitario: precoItem
-        }
-    })
-    const total = calcularTotal(itens);
-    return {itens, total}
+export type CartResponse = {
+    items: CartItemResponse[]
+    total: number
 }
 
-// pegar o valor e a quantidade da lista itens e usar reduce para somar o total
-
-function calcularTotal(itens: {subtotal: number}[]): number {
-    const total = itens.reduce((acumulado, itemAtual) => acumulado + itemAtual.subtotal,0)
-
-    return total;
+function subtotalOf(item: CartItem): Prisma.Decimal {
+    return item.livro.preco.mul(item.quantidade)
 }
 
-/**
- * validar (fast fail) <= 0 erro 400
- * buscar carrinho do usuario
- * validar se o carrinho é do usuario
- * buscar item no banco
- * validar de o item existe 
- * validar se a nova quantidade é maior que o existe no estoque (409)]\
- * salvar no banco
- */
-
-export async function atualizarQuantidadeItemCarrinho(idUsuario: string, idDoItem: string, novaQuantidade: number) {
-    if(novaQuantidade <= 0) 
-        throw new ErroDeDominio("Quantidade deve ser maior que zero", 400);
-
-    const item = await buscarEstoqueItem(idDoItem);
-    const carrinhoUsuario = await buscarCarrinhoUsuario(idUsuario);
-    
-    validarRegrasCarrinho(novaQuantidade, carrinhoUsuario, item);
-
-    const itemAtualizado = await atualizarQuantidadeItem(idDoItem,novaQuantidade)
-
-    return itemAtualizado;
+function toCartItem(item: CartItem): CartItemResponse {
+    return {
+        id: item.id,
+        bookId: item.livroId,
+        title: item.livro.titulo,
+        unitPrice: item.livro.preco.toNumber(),
+        quantity: item.quantidade,
+        subtotal: subtotalOf(item).toNumber(),
+    }
 }
 
-function verificaCarrinhoUsuario(carrinhoUsuario: CarrinhoDoUsuario | null){
-    if(!carrinhoUsuario)
-        throw new ErroDeDominio("Carrinho não encontrado", 404);
+function sumTotal(items: CartItem[]): number {
+    return items.reduce((acc, item) => acc.plus(subtotalOf(item)), new Prisma.Decimal(0)).toNumber()
 }
 
-function verificaItemExiste(item: ItemDoCarrinho, idDoCarrinho: string){
-    if(!item)
-        throw new ErroDeDominio("Item não existetente", 404);
+function ensureStockAvailable(requested: number, stock: number) {
+    if (requested > stock)
+        throw new ErroDeDominio('Quantidade não disponível em estoque.', 409)
 }
 
-function verificaQntEstoque(novaQuantidade: number, estoqueDoLivro: number){
-    if(novaQuantidade > estoqueDoLivro)
-        throw new ErroDeDominio("Quantidade não disponivel", 409)
+export async function addItem(
+    userId: string,
+    input: AddItemBody,
+    deps: CartDeps = defaultDeps
+): Promise<CartItemResponse> {
+    if (!(await deps.userExists(userId))) throw new ErroDeDominio('Usuário não encontrado.', 401);
+
+    const book = await deps.getBookById(input.bookId);
+    if (!book) throw new ErroDeDominio('Livro não encontrado.', 404);
+
+    ensureStockAvailable(input.quantity, book.estoque);
+
+    const addedItem = await deps.addItemToCart(userId, input.bookId, input.quantity);
+    if (!addedItem) throw new ErroDeDominio('Quantidade não disponível em estoque.', 409);
+
+    return toCartItem(addedItem);
 }
 
-function validarRegrasCarrinho(novaQuantidade: number, carrinhoUsuario: any, item: any) {
-    verificaCarrinhoUsuario(carrinhoUsuario);
-    verificaItemExiste(item, carrinhoUsuario.id);
-    verificaQntEstoque(novaQuantidade, item.livro.estoque);    
+export async function getCart(userId: string, deps: CartDeps = defaultDeps): Promise<CartResponse> {
+    const items = await deps.findCartItemsByUserId(userId);
+
+    return { items: items.map(toCartItem), total: sumTotal(items) }
+}
+
+export async function updateItemQuantity(
+    userId: string,
+    itemId: string,
+    newQuantity: number,
+    deps: CartDeps = defaultDeps
+): Promise<CartItemResponse> {
+    if (newQuantity <= 0)
+        throw new ErroDeDominio('Quantidade deve ser maior que zero', 400);
+    const item = await deps.findCartItemOfUser(userId, itemId);
+    if (!item) throw new ErroDeDominio('Item não encontrado no carrinho.', 404);
+
+    ensureStockAvailable(newQuantity, item.livro.estoque);
+
+    const updatedItem = await deps.updateItemQuantity(userId, itemId, newQuantity);
+    if (!updatedItem) throw new ErroDeDominio('Item não encontrado no carrinho.', 404);
+
+    return toCartItem(updatedItem);
+}
+
+export async function removeItem(userId: string, itemId: string, deps: CartDeps = defaultDeps): Promise<void> {
+    const removed = await deps.deleteItemFromCart(userId, itemId);
+    if (removed === 0) throw new ErroDeDominio('Item não encontrado no carrinho.', 404);
 }
