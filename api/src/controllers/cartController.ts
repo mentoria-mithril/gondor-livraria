@@ -3,13 +3,7 @@ import * as cartService from '../services/cartService.js'
 import { AddItemBody, ItemIdParams, UpdateQuantityBody, UserIdHeader } from '../schemas/cartSchema.js';
 import { ErroDeDominio } from '../errors/ErroDeDominio.js';
 
-/**
- * Um lugar só para descobrir quem é o usuário. Quando a fatia A (autenticação)
- * terminar, isto vira `req.user.id` e nenhum handler muda.
- *
- * ponytail: o header é declarado pelo cliente — qualquer um pode se passar por
- * outro usuário. Aceitável só até a fatia A trocar por JWT.
- */
+
 function requireUserId(req: Request): string {
     const parsed = UserIdHeader.safeParse(req.header('x-user-id'));
     if (!parsed.success) throw new ErroDeDominio('Informe um header x-user-id válido.', 401);
