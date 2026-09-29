@@ -1,4 +1,5 @@
 import { StatusDaApi } from '@/components/StatusDaApi'
+import Link from 'next/link'
 
 export default function Home() {
   return (
@@ -32,7 +33,11 @@ export default function Home() {
           </li>
         </ul>
       </section>
-
+      <p className="mt-4 text-sm">
+        <Link href="/cadastro" className="font-medium underline underline-offset-2">
+          Criar conta
+        </Link>
+      </p>
       <footer className="text-sm text-zinc-500">
         O escopo completo, o modelo de dados e os critérios de aceite estão no{' '}
         <code className="font-mono">README.md</code> e nas issues do repositório.
