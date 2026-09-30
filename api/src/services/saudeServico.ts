@@ -11,8 +11,10 @@ export type Saude = {
  * pode estar de pé e incapaz de atender qualquer requisição. Ele precisa checar
  * a dependência real.
  */
-export async function verificarSaude(): Promise<Saude> {
-  const banco = await bancoRespondendo()
+export async function verificarSaude(
+  consultarBanco: () => Promise<boolean> = bancoRespondendo,
+): Promise<Saude> {
+  const banco = await consultarBanco()
 
   return {
     status: banco ? 'ok' : 'degradado',
