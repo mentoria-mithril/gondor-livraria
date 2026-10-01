@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { saudeRotas } from './saudeRotas.js'
-
+import { usuarioRotas } from './usuarioRotas.js'
+import { authRoutes } from './authRoutes.js'
 /**
  * Tudo da API vive sob /api. Cada fatia acrescenta o seu router aqui:
  *
@@ -12,3 +13,5 @@ import { saudeRotas } from './saudeRotas.js'
 export const rotas = Router()
 
 rotas.use(saudeRotas)
+rotas.use(usuarioRotas)
+rotas.use(authRoutes)
