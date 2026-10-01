@@ -1,3 +1,3 @@
-# O mentor é dono de todo o código: uma das duas aprovações exigidas é sempre a dele.
-# A outra é de um colega — é assim que "um colega e o mentor" vira regra e não combinado.
-* @douglasmeneses
+# O mentor e a turma são donos de todo o código: a aprovação de qualquer um dos dois
+# vale como a do dono. O ruleset da dev continua exigindo duas aprovações por PR.
+* @douglasmeneses @mentoria-mithril/turma-gondor
