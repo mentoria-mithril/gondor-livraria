@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client'
 import { prisma } from './prisma.js'
+import { StockExceeded } from '../errors/StockExceeded.js'
 
 const itemWithBook = {
     include: {
@@ -21,14 +22,12 @@ export async function getBookById(id: number) {
     })
 }
 
-class StockExceeded extends Error {}
 
 export async function addItemToCart(
     userId: string,
     bookId: number,
     quantity: number
-): Promise<CartItem | null> {
-    try {
+): Promise<CartItem> {
         return await prisma.$transaction(async (tx) => {
             await tx.carrinho.createMany({ data: [{ usuarioId: userId }], skipDuplicates: true })
             const cart = await tx.carrinho.findUniqueOrThrow({
@@ -47,13 +46,11 @@ export async function addItemToCart(
                 ...itemWithBook,
             })
 
-            if (item.quantidade > item.livro.estoque) throw new StockExceeded()
+            if (item.quantidade > item.livro.estoque)
+                throw new StockExceeded(item.livro.estoque, item.quantidade - quantity)
+            
             return item
         })
-    } catch (erro) {
-        if (erro instanceof StockExceeded) return null
-        throw erro
-    }
 }
 
 export async function findCartItemsByUserId(userId: string): Promise<CartItem[]> {
