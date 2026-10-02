@@ -209,6 +209,92 @@
               "raw": "{\n  \"bookId\": {{bookId}},\n  \"quantity\": 1\n}"
             }
           }
+        },
+        {
+          "name": "GET com UUID de usuário que não existe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Usuário\"', () => pm.expect(pm.response.json().erro).to.include('Usuário'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{missingUuid}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart"
+          }
+        },
+        {
+          "name": "PATCH com UUID de usuário que não existe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Usuário\"', () => pm.expect(pm.response.json().erro).to.include('Usuário'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{missingUuid}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/{{missingUuid}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE com UUID de usuário que não existe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Usuário\"', () => pm.expect(pm.response.json().erro).to.include('Usuário'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{missingUuid}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/{{missingUuid}}"
+          }
         }
       ]
     },
@@ -985,7 +1071,19 @@
                 "exec": [
                   "pm.test('status 409', () => pm.response.to.have.status(409));",
                   "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
-                  "pm.test('mensagem menciona \"estoque\"', () => pm.expect(pm.response.json().erro).to.include('estoque'));"
+                  "pm.test('mensagem menciona \"estoque\"', () => pm.expect(pm.response.json().erro).to.include('estoque'));",
+                  "const erroAdd = pm.response.json().erro;",
+                  "pm.test('mensagem informa 0 no carrinho e o pedido de 999999', () => {",
+                  "  pm.expect(erroAdd).to.include('você já tem 0 no carrinho');",
+                  "  pm.expect(erroAdd).to.include('mais 999999');",
+                  "});",
+                  "if (pm.collectionVariables.get('bookStock')) {",
+                  "  const stock = pm.collectionVariables.get('bookStock');",
+                  "  pm.test('mensagem informa o estoque e o máximo que ainda cabe', () => {",
+                  "    pm.expect(erroAdd).to.include(`há ${stock} unidades`);",
+                  "    pm.expect(erroAdd).to.include(`no máximo ${stock}`);",
+                  "  });",
+                  "}"
                 ]
               }
             }
@@ -1078,6 +1176,14 @@
                   "pm.test('status 409', () => pm.response.to.have.status(409));",
                   "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
                   "pm.test('mensagem menciona \"estoque\"', () => pm.expect(pm.response.json().erro).to.include('estoque'));",
+                  "const stock = pm.collectionVariables.get('bookStock');",
+                  "const erroCheio = pm.response.json().erro;",
+                  "pm.test('mensagem informa estoque, quantidade no carrinho e pedido', () => {",
+                  "  pm.expect(erroCheio).to.include(`há ${stock} unidades`);",
+                  "  pm.expect(erroCheio).to.include(`você já tem ${stock} no carrinho`);",
+                  "  pm.expect(erroCheio).to.include('mais 1');",
+                  "});",
+                  "pm.test('avisa que todo o estoque já está no carrinho', () => pm.expect(erroCheio).to.include('todo o estoque disponível'));",
                   "",
                   "pm.sendRequest({ url: pm.collectionVariables.get('baseUrl') + '/cart', header: { 'x-user-id': pm.collectionVariables.get('userId') } },",
                   "  (err, res) => pm.test('carrinho continua com o estoque (nada foi gravado)', () =>",
@@ -1102,6 +1208,51 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"bookId\": {{bookId}},\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "PATCH exatamente no estoque",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('bookStock') || !pm.collectionVariables.get('itemId')) {",
+                  "  console.log('Pulado: preencha a variável bookStock (estoque atual do livro).');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('quantidade = estoque', () => pm.expect(pm.response.json().quantity).to.eql(Number(pm.collectionVariables.get('bookStock'))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/{{itemId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": {{bookStock}}\n}"
             }
           }
         },
