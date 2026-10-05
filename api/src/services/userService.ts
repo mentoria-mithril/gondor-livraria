@@ -36,6 +36,7 @@ export async function registerUser(
     deps: RegisterUserDependencies = defaultDependencies
 ): Promise<PublicUser> {
     const email = normalizeEmail(input.email);
+    const nome = input.nome.trim();
 
     const existing = await deps.findUserByEmail(email);
     if (existing) {
@@ -46,7 +47,7 @@ export async function registerUser(
 
     try {
         return await deps.createUserWithCart({
-            nome: input.nome.trim(),
+            nome,
             email,
             senhaHash: passwordHash,
         });
