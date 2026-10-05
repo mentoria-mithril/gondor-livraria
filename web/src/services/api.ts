@@ -7,63 +7,101 @@
  *   listarLivros(), obterCarrinho(), fecharPedido()...
  */
 
-const URL_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api'
+const URL_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
+
+export type CampoInvalido = {
+  campo: string;
+  mensagem: string;
+};
 
 /** Erro que a API devolveu com uma mensagem — dá para mostrar na tela. */
 export class ErroDaApi extends Error {
-  readonly status: number
+  readonly status: number;
+  readonly campos: CampoInvalido[];
 
-  constructor(mensagem: string, status: number) {
-    super(mensagem)
-    this.name = 'ErroDaApi'
-    this.status = status
+  constructor(mensagem: string, status: number, campos: CampoInvalido[] = []) {
+    super(mensagem);
+    this.name = 'ErroDaApi';
+    this.status = status;
+    this.campos = campos;
+  }
+
+  mensagemParaTela(): string {
+    const detalhes = this.campos.map((campo) => campo.mensagem);
+    return detalhes.length > 0 ? detalhes.join(' ') : this.message;
   }
 }
 
-export async function chamar<T>(caminho: string, opcoes: RequestInit = {}): Promise<T> {
+function lerCampos(corpo: { campos?: unknown } | null): CampoInvalido[] {
+  if (!Array.isArray(corpo?.campos)) {
+    return [];
+  }
+
+  return corpo.campos.flatMap((item: unknown) => {
+    if (typeof item !== 'object' || item === null) {
+      return [];
+    }
+
+    if (!('campo' in item) || !('mensagem' in item)) {
+      return [];
+    }
+
+    const { campo, mensagem } = item;
+    if (typeof campo !== 'string' || typeof mensagem !== 'string') {
+      return [];
+    }
+
+    return [{ campo, mensagem }];
+  });
+}
+
+export async function request<T>(caminho: string, opcoes: RequestInit = {}): Promise<T> {
   const resposta = await fetch(`${URL_BASE}${caminho}`, {
     ...opcoes,
     headers: { 'Content-Type': 'application/json', ...opcoes.headers },
     cache: 'no-store',
-  })
+  });
 
-  const corpo = await resposta.json().catch(() => null)
+  const corpo = await resposta.json().catch(() => null);
 
   if (!resposta.ok) {
-    // A API sempre devolve { erro: "..." }. Use a mensagem dela em vez de
-    // inventar uma genérica na tela.
-    throw new ErroDaApi(corpo?.erro ?? 'Não foi possível falar com a API.', resposta.status)
+   
+    throw new ErroDaApi(
+      corpo?.erro ?? 'Não foi possível falar com a API.',
+      resposta.status,
+      lerCampos(corpo),
+    );
   }
 
-  return corpo as T
+  return corpo as T;
 }
 
 export type Saude = {
-  status: 'ok' | 'degradado'
-  api: 'ok'
-  banco: 'conectado' | 'inacessivel'
-}
+  status: 'ok' | 'degradado';
+  api: 'ok';
+  banco: 'conectado' | 'inacessivel';
+};
 
 export function obterSaude(): Promise<Saude> {
-  return chamar<Saude>('/saude')
+  return request<Saude>('/saude');
 }
 
 export type PublicUser = {
-  id: string
-  nome: string
-  email: string
-  dtCriacao: string
-}
+  id: string;
+  nome: string;
+  email: string;
+  dtCriacao: string;
+};
 
 export type RegisterUserInput = {
-  nome: string
-  email: string
-  senha: string
-}
+  nome: string;
+  email: string;
+  senha: string;
+};
 
 export function registerUser(data: RegisterUserInput): Promise<PublicUser> {
-  return chamar<PublicUser>('/usuarios', {
+  return request<PublicUser>('/usuarios', {
     method: 'POST',
     body: JSON.stringify(data),
-  })
+  });
 }

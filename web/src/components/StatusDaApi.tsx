@@ -1,12 +1,12 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { obterSaude, type Saude } from '@/services/api'
+import { useEffect, useState } from 'react';
+import { obterSaude, type Saude } from '@/services/api';
 
 type Estado =
   | { fase: 'carregando' }
   | { fase: 'ok'; saude: Saude }
-  | { fase: 'erro'; mensagem: string }
+  | { fase: 'erro'; mensagem: string };
 
 /**
  * O "está tudo ligado?" da fatia 0. É também o exemplo mínimo de um componente
@@ -14,23 +14,23 @@ type Estado =
  * os três, sempre. Tela que só trata o caminho feliz volta no review.
  */
 export function StatusDaApi() {
-  const [estado, setEstado] = useState<Estado>({ fase: 'carregando' })
+  const [estado, setEstado] = useState<Estado>({ fase: 'carregando' });
 
   useEffect(() => {
-    let vivo = true
+    let vivo = true;
 
     obterSaude()
       .then((saude) => vivo && setEstado({ fase: 'ok', saude }))
-      .catch((erro: Error) => vivo && setEstado({ fase: 'erro', mensagem: erro.message }))
+      .catch((erro: Error) => vivo && setEstado({ fase: 'erro', mensagem: erro.message }));
 
     // Evita `setState` depois do componente sair da tela.
     return () => {
-      vivo = false
-    }
-  }, [])
+      vivo = false;
+    };
+  }, []);
 
   if (estado.fase === 'carregando') {
-    return <p className="text-sm text-zinc-500">Falando com a API…</p>
+    return <p className="text-sm text-zinc-500">Falando com a API…</p>;
   }
 
   if (estado.fase === 'erro') {
@@ -43,10 +43,10 @@ export function StatusDaApi() {
           <code className="font-mono">api/</code>.
         </p>
       </div>
-    )
+    );
   }
 
-  const bancoOk = estado.saude.banco === 'conectado'
+  const bancoOk = estado.saude.banco === 'conectado';
 
   return (
     <div
@@ -71,5 +71,5 @@ export function StatusDaApi() {
         </p>
       )}
     </div>
-  )
+  );
 }
