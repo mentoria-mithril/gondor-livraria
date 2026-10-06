@@ -1,7 +1,6 @@
 import { SidebarMenuItem } from "../ui/sidebar";
 import { Item, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from "@/components/ui/item"
 import { SavedCartItem } from "@/types/cart/cartTypes"
-import { BOOKS_MOCK } from "@/mocks/books"
 import { Button } from "../ui/button";
 import { Trash2 } from "lucide-react"
 type Props = {
@@ -11,15 +10,13 @@ type Props = {
 }
 
 export function CartItemCard(props: Props) {
-    const imageUrl = BOOKS_MOCK.find((book) => book.id === props.item.bookId)?.capaUrl
-
     return(
         <SidebarMenuItem>
             <Item>
                 <ItemMedia variant="image" className="w-16 h-16 [&_img]:object-contain group-data-[collapsible=icon]:hidden">
-                   {imageUrl
-                    ? <img src={imageUrl} alt={props.item.title}/>
-                    : <div className="bg-muted size-full"/>}
+                   {props.item.imageUrl
+                    ? <img src={props.item.imageUrl} alt={props.item.title}/>
+                    : <div className="bg-sidebar-foreground/10 size-full"/>}
                 </ItemMedia>
                 <ItemContent className="group-data-[collapsible=icon]:hidden">
                     <ItemTitle><span className="line-clamp-2">{props.item.title}</span></ItemTitle>

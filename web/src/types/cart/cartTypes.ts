@@ -23,6 +23,7 @@ export interface SavedCartItem {
     unitPrice: number;
     quantity: number;
     subtotal: number;
+    imageUrl?: string | null;
 }
 
 export interface SavedCart {
