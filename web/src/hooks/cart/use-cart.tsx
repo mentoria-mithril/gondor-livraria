@@ -1,9 +1,20 @@
-import { useEffect, useState } from "react";
+'use client'
+
+import { createContext, useContext, useEffect, useState } from "react";
 import type { SavedCartItem } from "@/types/cart/cartTypes";
 import { addCartItem, getCart, removeCartItem, updateCartItemQuantity } from "@/services/cart/cartService";
 
-export function useCart(){
-    
+type CartContextValue = {
+    items: SavedCartItem[]
+    error: string | null
+    addToCart: (bookId: number) => Promise<void>
+    decreaseQuantity: (bookId: number) => Promise<void>
+}
+
+const CartContext = createContext<CartContextValue | null>(null)
+
+export function CartProvider({ children }: { children: React.ReactNode }){
+
     const [items, setItems] = useState<SavedCartItem[]>([])
     const [error, setError] = useState<string | null>(null)
 
@@ -48,5 +59,15 @@ export function useCart(){
         }
     }
 
-    return { items, error, addToCart, decreaseQuantity }
+    return (
+        <CartContext value={{ items, error, addToCart, decreaseQuantity }}>
+            {children}
+        </CartContext>
+    )
+}
+
+export function useCart(){
+    const cart = useContext(CartContext)
+    if (!cart) throw new Error('useCart precisa estar dentro de <CartProvider>.')
+    return cart
 }
