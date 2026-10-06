@@ -5,20 +5,19 @@ import {
   SidebarHeader,
   SidebarTrigger,
   SidebarSeparator,
+  SidebarFooter,
 } from "@/components/ui/sidebar"
-import type { ItemCarrinho } from "@/types/carrinho/CarrinhoTypes"
+import { Button } from "@/components/ui/button"
+import type { SavedCartItem } from "@/types/cart/cartTypes"
+import { CartItemCard } from "../cart/CartItemCard"
 
 type Props = {
-  itens?: ItemCarrinho[]
-  onAumentar?: (livroId: number) => void
-  onDiminuir?: (livroId: number) => void
+  items: SavedCartItem[]
+  onIncrease: (bookId: number) => void
+  onDecrease: (bookId: number) => void
 }
 
-export function AppSidebar({
-  itens = [],
-  onAumentar = () => {},
-  onDiminuir = () => {},
-}: Props) {
+export function AppSidebar({items, onIncrease, onDecrease}: Props) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="flex-row items-center justify-between  group-data-[collapsible=icon]:justify-center ">
@@ -35,27 +34,26 @@ export function AppSidebar({
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {itens.length === 0 && (
+              {items.length === 0 && (
                 <p className="px-3 py-1 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
                   Nenhum livro no carrinho.
                 </p>
               )}
-              
-              {/* key={livroId}: o id do DADO, nunca o índice do array — com
-                  índice o React embaralha as linhas quando uma some do meio. 
-              {itens.map((item) => (
-                <CarrinhoItem
-                  key={item.livroId}
+              {items.map((item) => (
+                <CartItemCard
+                  key={item.id}
                   item={item}
-                  onAumentar={onAumentar}
-                  onDiminuir={onDiminuir}
+                  onIncrease={onIncrease}
+                  onDecrease={onDecrease}
                 />
               ))}
-              */}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="group-data-[collapsible=icon]:hidden">
+          <Button variant="outline" className="flex flex-col gap-2 p-2 bg-[#A60321] hover:bg-primary/30 rounded-full">Fechar pedido</Button>
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )
