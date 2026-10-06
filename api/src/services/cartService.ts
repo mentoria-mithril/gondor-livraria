@@ -3,7 +3,7 @@ import type { AddItemBody } from '../schemas/cartSchema.js';
 import * as cartRepository from '../repositories/cartRepository.js';
 import type { CartItem } from '../repositories/cartRepository.js';
 import { ErroDeDominio } from '../errors/ErroDeDominio.js';
-import {CartItemResponse, CartResponse, CartItemRequest}  from '../types/cartTypes.js';
+import {CartItemResponse, CartResponse}  from '../types/cartTypes.js';
 import { StockExceeded } from '../errors/StockExceeded.js';
 
 function subtotalOf(item: CartItem): Prisma.Decimal {
@@ -79,8 +79,6 @@ export async function updateItemQuantity(
     const item = await cartRepository.findCartItemOfUser(userId, itemId);
     if (!item) throw new ErroDeDominio('Item não encontrado no carrinho.', 404);
 
-    ensureStockAvailable(newQuantity, item.livro.estoque);
-
     const updatedItem = await cartRepository.updateItemQuantity(userId, itemId, newQuantity);
     if (!updatedItem) throw new ErroDeDominio('Item não encontrado no carrinho.', 404);
 
@@ -88,6 +86,7 @@ export async function updateItemQuantity(
 }
 
 export async function removeItem(userId: string, itemId: string): Promise<void> {
+    if (!(await cartRepository.userExists(userId))) throw new ErroDeDominio('Usuário não encontrado.', 401);
     const removed = await cartRepository.deleteItemFromCart(userId, itemId);
     if (removed === 0) throw new ErroDeDominio('Item não encontrado no carrinho.', 404);
 }
