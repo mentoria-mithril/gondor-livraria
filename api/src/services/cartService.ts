@@ -25,11 +25,6 @@ function sumTotal(items: CartItem[]): number {
     return items.reduce((acc, item) => acc.plus(subtotalOf(item)), new Prisma.Decimal(0)).toNumber()
 }
 
-function ensureStockAvailable(requested: number, stock: number) {
-    if (requested > stock)
-        throw new ErroDeDominio('Quantidade não disponível em estoque.', 409) 
-}
-
 export async function addItem(
     userId: string,
     input: AddItemBody,
