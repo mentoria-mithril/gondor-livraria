@@ -13,15 +13,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Livraria — turma Gondor",
-  description: "Loja de livros online — projeto da turma Gondor da Mentoria Mithril",
+  title: "Bookstore — Gondor Team",
+  description: "Online bookstore — a project by the Gondor team at Mithril Mentorship",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="pt-BR"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang="en"
+      className={geistSans.variable + " " + geistMono.variable + " h-full antialiased"}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

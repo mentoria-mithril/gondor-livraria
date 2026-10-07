@@ -20,9 +20,7 @@ const defaultDependencies: RegistrationDependencies = {
   hashPassword,
 }
 
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase()
-}
+
 
 function isUniqueEmailConflict(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002'
@@ -32,8 +30,7 @@ export async function registerUser(
   input: UserRegistrationInput,
   dependencies: RegistrationDependencies = defaultDependencies,
 ): Promise<PublicUser> {
-  const email = normalizeEmail(input.email)
-  const existingUser = await dependencies.findUserByEmail(email)
+  const existingUser = await dependencies.findUserByEmail(input.email)
 
   if (existingUser) {
     throw new DomainError('Email address is already registered.', 409)
@@ -44,7 +41,7 @@ export async function registerUser(
   try {
     return await dependencies.createUserWithCart({
       name: input.name.trim(),
-      email,
+      email: input.email,
       passwordHash,
     })
   } catch (error) {

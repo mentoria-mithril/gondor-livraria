@@ -1,82 +1,96 @@
+import type { LoginCredentials } from '@/types/user/Auth'
+import type { PublicUser, RegistrationDetails } from '@/types/user/User'
+
 /**
- * O ÚNICO lugar do front que chama a API. Tela não faz `fetch` — tela chama uma
- * função daqui. É isto que impede a URL da API de aparecer espalhada em 15
- * componentes no dia em que ela mudar.
- *
- * Cada fatia acrescenta as suas funções neste arquivo (ou num irmão dele):
- *   listarLivros(), obterCarrinho(), fecharPedido()...
+ * The only place in the frontend that calls the API. Pages call functions
+ * from here, keeping the API URL in one place.
  */
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api'
 
-const URL_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api'
-
-/** Erro que a API devolveu com uma mensagem — dá para mostrar na tela. */
-export class ErroDaApi extends Error {
+/** Error returned by the API with a message that can be shown to the user. */
+export class ApiError extends Error {
   readonly status: number
 
-  constructor(mensagem: string, status: number) {
-    super(mensagem)
-    this.name = 'ErroDaApi'
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = 'ApiError'
     this.status = status
   }
 }
 
-export async function chamar<T>(caminho: string, opcoes: RequestInit = {}): Promise<T> {
-  const resposta = await fetch(`${URL_BASE}${caminho}`, {
-    ...opcoes,
-    headers: { 'Content-Type': 'application/json', ...opcoes.headers },
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(BASE_URL + path, {
+    ...options,
+    headers: { 'Content-Type': 'application/json', ...options.headers },
     cache: 'no-store',
   })
 
-  const corpo = await resposta.json().catch(() => null)
+  const body = await response.json().catch(() => null)
 
-  if (!resposta.ok) {
-    // A API sempre devolve { erro: "..." }. Use a mensagem dela em vez de
-    // inventar uma genérica na tela.
-    throw new ErroDaApi(corpo?.erro ?? 'Não foi possível falar com a API.', resposta.status)
+  if (!response.ok) {
+    // The API returns { erro: "..." }; show its message when available.
+    throw new ApiError(body?.erro ?? 'Could not reach the API.', response.status)
   }
 
-  return corpo as T
+  return body as T
 }
 
-export type Saude = {
-  status: 'ok' | 'degradado'
-  api: 'ok'
-  banco: 'conectado' | 'inacessivel'
-}
-
-export function obterSaude(): Promise<Saude> {
-  return chamar<Saude>('/saude')
-}
-
-export type UsuarioPublico = {
+type ApiUser = {
   id: string
   nome: string
   email: string
   dtCriacao: string
 }
 
-export type CadastroUsuarioEntrada = {
-  nome: string
-  email: string
-  senha: string
+function toPublicUser(user: ApiUser): PublicUser {
+  return {
+    id: user.id,
+    name: user.nome,
+    email: user.email,
+    createdAt: user.dtCriacao,
+  }
 }
 
-export type LoginUsuarioEntrada = {
-  email: string
-  senha: string
-}
-
-
-export function autenticarUsuario(dados: LoginUsuarioEntrada): Promise<UsuarioPublico> {
-  return chamar<UsuarioPublico>('/login', {
+export async function registerUser(details: RegistrationDetails): Promise<PublicUser> {
+  const user = await request<ApiUser>('/usuarios', {
     method: 'POST',
-    body: JSON.stringify(dados),
-  });
+    body: JSON.stringify({
+      nome: details.name,
+      email: details.email,
+      senha: details.password,
+    }),
+  })
+  return toPublicUser(user)
 }
 
-export function cadastrarUsuario(dados: CadastroUsuarioEntrada): Promise<UsuarioPublico> {
-  return chamar<UsuarioPublico>('/usuarios', {
+export async function authenticateUser(credentials: LoginCredentials): Promise<PublicUser> {
+  const user = await request<ApiUser>('/login', {
     method: 'POST',
-    body: JSON.stringify(dados),
-  });
+    body: JSON.stringify({
+      email: credentials.email,
+      senha: credentials.password,
+    }),
+  })
+  return toPublicUser(user)
+}
+
+type ApiHealth = {
+  status: 'ok' | 'degradado'
+  api: 'ok'
+  banco: 'conectado' | 'inacessivel'
+}
+
+export type ApiHealthStatus = {
+  status: 'ok' | 'degraded'
+  api: 'ok'
+  database: 'connected' | 'inaccessible'
+}
+
+export async function getApiHealth(): Promise<ApiHealthStatus> {
+  const health = await request<ApiHealth>('/saude')
+  return {
+    status: health.status === 'degradado' ? 'degraded' : 'ok',
+    api: health.api,
+    database: health.banco === 'conectado' ? 'connected' : 'inaccessible',
+  }
 }

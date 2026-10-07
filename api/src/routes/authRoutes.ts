@@ -6,4 +6,4 @@ import { loginSchema } from '../schemas/authSchema.js'
 
 export const authRoutes = Router()
 
-authRoutes.post('/login', validate(loginSchema), envolver(login))
+authRoutes.post('/auth', validate(loginSchema), envolver(login))

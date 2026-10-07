@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client'
 import { DomainError } from '../errors/DomainError.js'
 import type { LoginInput } from '../schemas/authSchema.js'
 import type { PublicUser } from '../repositories/userRepository.js'
@@ -15,16 +14,12 @@ const defaultDependencies: LoginDependencies = {
   comparePassword,
 }
 
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase()
-}
 
 export async function authenticateUser(
   input: LoginInput,
   dependencies: LoginDependencies = defaultDependencies,
 ): Promise<PublicUser> {
-  const email = normalizeEmail(input.email)
-  const user = await dependencies.findUserForAuthentication(email)
+  const user = await dependencies.findUserForAuthentication(input.email)
 
   if (!user) {
     throw new DomainError('Invalid email or password.', 401)
