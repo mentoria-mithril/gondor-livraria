@@ -153,10 +153,10 @@ POST   /api/auth                  login
 GET    /api/livros                lista, com ?busca=, ?categoria=, ?pagina=
 GET    /api/livros/:id            detalhe
 
-GET    /api/carrinho              o carrinho do usuário logado
-POST   /api/carrinho/itens        adiciona um livro (soma se já estiver lá)
-PATCH  /api/carrinho/itens/:id    muda a quantidade
-DELETE /api/carrinho/itens/:id    remove
+GET    /api/cart                  o carrinho do usuário logado
+POST   /api/cart/items            adiciona um livro (soma se já estiver lá)
+PATCH  /api/cart/items/:itemId    muda a quantidade
+DELETE /api/cart/items/:itemId    remove
 
 POST   /api/pedidos               fecha o carrinho e vira pedido
 GET    /api/pedidos               os pedidos do usuário logado
@@ -224,7 +224,7 @@ arquivo e o merge para de doer.
 | **0 — Esqueleto** | Sprint 1, a turma inteira junto: `docker compose` com o Postgres, projeto da API de pé, `schema.prisma` com os seis modelos, primeira migração, `GET /api/saude` e o *seed* do catálogo. É o exemplo que as outras fatias copiam. |
 | **A — Conta** | `POST /api/usuarios`, `POST /api/auth`, hash de senha, middleware de autenticação, telas de cadastro e login |
 | **B — Catálogo** | `GET /api/livros` com busca, filtro e paginação, `GET /api/livros/:id`, listagem e página de detalhe |
-| **C — Carrinho** | as quatro rotas de `/api/carrinho`, a regra de juntar linhas repetidas, e a tela do carrinho |
+| **C — Carrinho** | as quatro rotas de `/api/cart`, a regra de juntar linhas repetidas, e a tela do carrinho |
 | **D — Pedido** | `POST /api/pedidos` com conferência de estoque, congelamento de preço e baixa de estoque, mais as telas de checkout e de "meus pedidos" |
 
 A fatia 0 é pré-requisito de todas. As outras quatro correm em paralelo — B não espera A
