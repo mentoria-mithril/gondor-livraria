@@ -3,16 +3,16 @@ import {prisma} from "./prisma.js"
 
 export const selectUsuarioAutenticacao ={
     id: true,
-    nome: true,
+    name: true,
     email: true,
-    senha: true,
-    dtCriacao: true,
-} satisfies Prisma.UsuarioSelect;
+    password: true,
+    createdAt: true,
+} satisfies Prisma.UserSelect;
 
-export type UsuarioParaAutenticacao = Prisma.UsuarioGetPayload<{select: typeof selectUsuarioAutenticacao}>;
+export type UsuarioParaAutenticacao = Prisma.UserGetPayload<{select: typeof selectUsuarioAutenticacao}>;
 
-export async function buscarUsuarioParaAutenticacao(email: string): Promise<UsuarioParaAutenticacao | null> {
-    return prisma.usuario.findUnique({ 
+export async function findUserForAuthentication(email: string): Promise<UsuarioParaAutenticacao | null> {
+    return prisma.user.findUnique({ 
         where: { email }, 
         select: selectUsuarioAutenticacao,
     })

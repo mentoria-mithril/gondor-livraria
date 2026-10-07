@@ -1,47 +1,44 @@
-import { ErroDeDominio } from "../errors/ErroDeDominio.js";
-import type { loginUsuarioEntrada } from "../schemas/authEsquema.js";
-import type { UsuarioPublico } from "../repositories/usuarioRepositorio.js";
-import { buscarUsuarioParaAutenticacao } from "../repositories/authRepository.js";
-import {compararSenha} from './senhaServico.js';
-import { Prisma } from "@prisma/client";
+import { Prisma } from '@prisma/client'
+import { DomainError } from '../errors/DomainError.js'
+import type { LoginInput } from '../schemas/authSchema.js'
+import type { PublicUser } from '../repositories/userRepository.js'
+import { findUserForAuthentication } from '../repositories/authRepository.js'
+import { comparePassword } from './passwordService.js'
 
-type DependenciasLogin = {
-    buscarUsuarioParaAutenticacao: typeof buscarUsuarioParaAutenticacao
-    compararSenha: typeof compararSenha
+type LoginDependencies = {
+  findUserForAuthentication: typeof findUserForAuthentication
+  comparePassword: typeof comparePassword
 }
 
-const dependencias: DependenciasLogin ={
-    buscarUsuarioParaAutenticacao,
-    compararSenha,
+const defaultDependencies: LoginDependencies = {
+  findUserForAuthentication,
+  comparePassword,
 }
 
-function normalizarEmail(email: string): string {
-    return email.trim().toLowerCase();
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase()
 }
 
-export async function autenticarUsuario(
-    entrada: loginUsuarioEntrada,
-    deps: DependenciasLogin = dependencias
-): Promise<UsuarioPublico> {
-    const email = normalizarEmail(entrada.email)
-    const usuario = await deps.buscarUsuarioParaAutenticacao(email);
-    if(!usuario){
-        throw new ErroDeDominio('Email ou senhas invalidos', 401)
-    }
+export async function authenticateUser(
+  input: LoginInput,
+  dependencies: LoginDependencies = defaultDependencies,
+): Promise<PublicUser> {
+  const email = normalizeEmail(input.email)
+  const user = await dependencies.findUserForAuthentication(email)
 
-    const senhaCorreta = await deps.compararSenha(
-        entrada.senha,
-        usuario.senha,
-    );
+  if (!user) {
+    throw new DomainError('Invalid email or password.', 401)
+  }
 
-    if(!senhaCorreta){
-        throw new ErroDeDominio('email ou senhas invalidos', 401)
-    }
+  const passwordIsCorrect = await dependencies.comparePassword(input.password, user.password)
+  if (!passwordIsCorrect) {
+    throw new DomainError('Invalid email or password.', 401)
+  }
 
-    return{
-        id: usuario.id,
-        nome: usuario.nome,
-        email: usuario.email,
-        dtCriacao: usuario.dtCriacao
-    }
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    createdAt: user.createdAt,
+  }
 }

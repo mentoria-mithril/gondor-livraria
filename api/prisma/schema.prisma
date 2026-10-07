@@ -12,17 +12,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Usuario {
+model User {
   id         String   @id @default(uuid())
-  nome       String
+  name       String
   email      String   @unique
-  senha      String // sempre hash, nunca texto puro
-  dtCriacao  DateTime @default(now()) @map("dt_criacao")
+  password      String // sempre hash, nunca texto puro
+  createdAt  DateTime @default(now()) @map("createdAt")
 
-  carrinho Carrinho?
+  cart Cart?
   pedidos  Pedido[]
 
-  @@map("usuario")
+  @@map("user")
 }
 
 model Livro {
@@ -45,15 +45,15 @@ model Livro {
   @@map("livro")
 }
 
-model Carrinho {
+model Cart {
   id             String   @id @default(uuid())
-  usuarioId      String   @unique @map("usuario_id")
+  userId      String   @unique @map("userid")
   dtAtualizacao  DateTime @updatedAt @map("dt_atualizacao")
 
-  usuario Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   itens   ItemCarrinho[]
 
-  @@map("carrinho")
+  @@map("cart")
 }
 
 model ItemCarrinho {
@@ -62,7 +62,7 @@ model ItemCarrinho {
   livroId     Int    @map("livro_id")
   quantidade  Int
 
-  carrinho Carrinho @relation(fields: [carrinhoId], references: [id], onDelete: Cascade)
+  cart Cart @relation(fields: [carrinhoId], references: [id], onDelete: Cascade)
   livro    Livro    @relation(fields: [livroId], references: [id])
 
   // É ESTA linha que impede duas linhas do mesmo livro no mesmo carrinho.
@@ -81,15 +81,15 @@ enum StatusPedido {
 
 model Pedido {
   id          String       @id @default(uuid())
-  usuarioId   String       @map("usuario_id")
+  userId   String       @map("userId")
   status      StatusPedido @default(AGUARDANDO_PAGAMENTO)
   valorTotal  Decimal      @map("valor_total") @db.Decimal(10, 2)
   dtCriacao   DateTime     @default(now()) @map("dt_criacao")
 
-  usuario Usuario      @relation(fields: [usuarioId], references: [id])
+  user User      @relation(fields: [userId], references: [id])
   itens   ItemPedido[]
 
-  @@index([usuarioId, dtCriacao])
+  @@index([userId, dtCriacao])
   @@map("pedido")
 }
 

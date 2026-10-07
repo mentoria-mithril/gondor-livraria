@@ -1,17 +1,10 @@
 import { Router } from 'express'
 import { saudeRotas } from './saudeRotas.js'
-import { usuarioRotas } from './usuarioRotas.js'
+import { userRoutes } from './userRoutes.js'
 import { authRoutes } from './authRoutes.js'
-/**
- * Tudo da API vive sob /api. Cada fatia acrescenta o seu router aqui:
- *
- *   rotas.use(usuarioRotas)     fatia A
- *   rotas.use(livroRotas)       fatia B
- *   rotas.use(carrinhoRotas)    fatia C
- *   rotas.use(pedidoRotas)      fatia D
- */
+/** Mount each feature router under /api. */
 export const rotas = Router()
 
 rotas.use(saudeRotas)
-rotas.use(usuarioRotas)
+rotas.use(userRoutes)
 rotas.use(authRoutes)
