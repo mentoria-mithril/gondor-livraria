@@ -1,10 +1,10 @@
 import { Prisma } from '@prisma/client';
-import type { AddItemBody } from '../schemas/cartSchema.js';
 import * as cartRepository from '../repositories/cartRepository.js';
+import * as bookRepository from '../repositories/bookRepository.js';
 import type { CartItem } from '../repositories/cartRepository.js';
+import { prisma } from '../repositories/prisma.js';
 import { ErroDeDominio } from '../errors/ErroDeDominio.js';
 import {CartItemResponse, CartResponse}  from '../types/cartTypes.js';
-import { StockExceeded } from '../errors/StockExceeded.js';
 
 function subtotalOf(item: CartItem): Prisma.Decimal {
     return item.livro.preco.mul(item.quantidade)
@@ -27,23 +27,34 @@ function sumTotal(items: CartItem[]): number {
 
 export async function addItem(
     userId: string,
-    input: AddItemBody,
+    bookId: number,
+    quantity: number
 ): Promise<CartItemResponse> {
-    if (!(await cartRepository.userExists(userId))) throw new ErroDeDominio('Usuário não encontrado.', 401);
+    if (!(await cartRepository.findUserByEmail(userId))) throw new ErroDeDominio('Usuário não encontrado.', 401);
 
-    const book = await cartRepository.getBookById(input.bookId);
+    const book = await bookRepository.getBookById(bookId);
     if (!book) throw new ErroDeDominio('Livro não encontrado.', 404);
 
-    try {
-        const addedItem = await cartRepository.addItemToCart(userId, input.bookId, input.quantity);
-        return toCartItem(addedItem);
-    } catch (erro) {
-        if (erro instanceof StockExceeded) throw stockExceededError(erro, input.quantity);
-        throw erro;
-    }
+    const addedItem: CartItem = await prisma.$transaction(async (tx) => {
+        const cart = await cartRepository.findCartIdByUserId(tx, userId);
+        if (!cart) throw new ErroDeDominio('Carrinho não encontrado.', 404);
+
+        const { id } = await cartRepository.addItemToCart(tx, cart.id, bookId, quantity);
+        const itemWithBook: CartItem = await cartRepository.findItemWithBook(tx, id);
+        ensureStockAvailable(itemWithBook, quantity);
+
+        return itemWithBook;
+    });
+
+    return toCartItem(addedItem);
 }
 
-function stockExceededError({ stock, inCart }: StockExceeded, requested: number): ErroDeDominio {
+function ensureStockAvailable(item: CartItem, requested: number): void {
+    if (item.quantidade > item.livro.estoque)
+        throw stockExceededError(item.livro.estoque, item.quantidade - requested, requested);
+}
+
+function stockExceededError(stock: number, inCart: number, requested: number): ErroDeDominio {
     const available = stock - inCart;
     const hint = available > 0
         ? `Você pode adicionar no máximo ${available}.`
@@ -57,9 +68,8 @@ function stockExceededError({ stock, inCart }: StockExceeded, requested: number)
 }
 
 export async function getCart(userId: string): Promise<CartResponse> {
-    if (!(await cartRepository.userExists(userId))) throw new ErroDeDominio('Usuário não encontrado.', 401);
+    if (!(await cartRepository.findUserByEmail(userId))) throw new ErroDeDominio('Usuário não encontrado.', 401);
     const items = await cartRepository.findCartItemsByUserId(userId);
-
     return { items: items.map(toCartItem), total: sumTotal(items) }
 }
 
@@ -68,7 +78,8 @@ export async function updateItemQuantity(
     itemId: string,
     newQuantity: number,
 ): Promise<CartItemResponse> {
-    if (!(await cartRepository.userExists(userId))) throw new ErroDeDominio('Usuário não encontrado.', 401);
+    if (!(await cartRepository.findUserByEmail(userId))) throw new ErroDeDominio('Usuário não encontrado.', 401);
+
     if (newQuantity <= 0)
         throw new ErroDeDominio('Quantidade deve ser maior que zero', 400);
     const item = await cartRepository.findCartItemOfUser(userId, itemId);
@@ -81,7 +92,7 @@ export async function updateItemQuantity(
 }
 
 export async function removeItem(userId: string, itemId: string): Promise<void> {
-    if (!(await cartRepository.userExists(userId))) throw new ErroDeDominio('Usuário não encontrado.', 401);
+    if (!(await cartRepository.findUserByEmail(userId))) throw new ErroDeDominio('Usuário não encontrado.', 401);
     const removed = await cartRepository.deleteItemFromCart(userId, itemId);
     if (removed === 0) throw new ErroDeDominio('Item não encontrado no carrinho.', 404);
 }

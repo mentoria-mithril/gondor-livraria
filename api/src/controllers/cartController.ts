@@ -12,9 +12,9 @@ function requireUserId(req: Request): string {
 
 export async function addItem(req: Request, res: Response): Promise<void> {
     const userId = requireUserId(req);
-    const body = AddItemBody.parse(req.body);
+    const { bookId, quantity } = AddItemBody.parse(req.body);
 
-    const item = await cartService.addItem(userId, body)
+    const item = await cartService.addItem(userId, bookId, quantity)
     res.status(201).json(item);
 }
 

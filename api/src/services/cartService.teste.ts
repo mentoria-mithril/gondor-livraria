@@ -86,7 +86,7 @@ test('getCart recusa com 401 quando o usuário não existe', async () => {
 test('addItem devolve o item adicionado com preço em number', async () => {
   fakeDb({ livro: { id: 1, estoque: 10 }, $transaction: async () => itemFalso(50, 2) })
 
-  const item = await addItem('usuario-1', { bookId: 1, quantity: 2 })
+  const item = await addItem('usuario-1', 1, 2)
 
   assert.deepEqual(item, { id: 'item-1', bookId: 1, title: 'Livro 1', unitPrice: 50, quantity: 2, subtotal: 100 })
 })
@@ -94,27 +94,27 @@ test('addItem devolve o item adicionado com preço em number', async () => {
 test('addItem recusa com 401 quando o usuário não existe', async () => {
   fakeDb({ usuario: null })
 
-  await assert.rejects(addItem('fantasma', { bookId: 1, quantity: 1 }), erroComStatus(401))
+  await assert.rejects(addItem('fantasma', 1, 1), erroComStatus(401))
 })
 
 test('addItem recusa com 404 quando o livro não existe', async () => {
   fakeDb({ livro: null })
 
-  await assert.rejects(addItem('usuario-1', { bookId: 99, quantity: 1 }), erroComStatus(404))
+  await assert.rejects(addItem('usuario-1', 99, 1), erroComStatus(404))
 })
 
 test('addItem vira 409 dizendo quanto ainda dá para adicionar quando estoura o estoque', async () => {
   // estoque 5, já tem 3 no carrinho, pediu mais 4 → cabem só 2
   fakeDb({ livro: { id: 1, estoque: 5 }, $transaction: async () => { throw new StockExceeded(5, 3) } })
 
-  await assert.rejects(addItem('usuario-1', { bookId: 1, quantity: 4 }), (erro) =>
+  await assert.rejects(addItem('usuario-1', 1, 4), (erro) =>
     erroComStatus(409)(erro) && (erro as Error).message.includes('no máximo 2'))
 })
 
 test('addItem vira 409 avisando que o estoque inteiro já está no carrinho', async () => {
   fakeDb({ livro: { id: 1, estoque: 5 }, $transaction: async () => { throw new StockExceeded(5, 5) } })
 
-  await assert.rejects(addItem('usuario-1', { bookId: 1, quantity: 1 }), (erro) =>
+  await assert.rejects(addItem('usuario-1', 1, 1), (erro) =>
     erroComStatus(409)(erro) && (erro as Error).message.includes('todo o estoque disponível'))
 })
 
@@ -122,7 +122,7 @@ test('addItem repassa erros que não são de estoque sem transformar', async () 
   const falhaDoBanco = new Error('conexão caiu')
   fakeDb({ livro: { id: 1, estoque: 5 }, $transaction: async () => { throw falhaDoBanco } })
 
-  await assert.rejects(addItem('usuario-1', { bookId: 1, quantity: 1 }), (erro) => erro === falhaDoBanco)
+  await assert.rejects(addItem('usuario-1', 1, 1), (erro) => erro === falhaDoBanco)
 })
 
 // ---------- updateItemQuantity ----------
