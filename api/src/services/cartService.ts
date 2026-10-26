@@ -2,7 +2,6 @@ import { Prisma } from '@prisma/client';
 import * as cartRepository from '../repositories/cartRepository.js';
 import * as bookRepository from '../repositories/bookRepository.js';
 import type { CartItem } from '../repositories/cartRepository.js';
-import { prisma, Tx } from '../repositories/prisma.js';
 import { ErroDeDominio } from '../errors/ErroDeDominio.js';
 import {CartItemResponse, CartResponse}  from '../types/cartTypes.js';
 
@@ -35,7 +34,7 @@ export async function addItem(
     const book = await bookRepository.getBookById(bookId);
     if (!book) throw new ErroDeDominio('Livro não encontrado.', 404);
 
-    const addedItem: CartItem = await prisma.$transaction(async (tx: Tx) => {
+    const addedItem: CartItem = await cartRepository.withTransaction(async (tx) => {
         const cart = await cartRepository.findCartIdByUserId(tx, userId);
         if (!cart) throw new ErroDeDominio('Carrinho não encontrado.', 404);
 

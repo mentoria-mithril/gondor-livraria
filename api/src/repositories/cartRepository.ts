@@ -9,6 +9,10 @@ const itemWithBook = {
 
 export type CartItem = Prisma.ItemCarrinhoGetPayload<typeof itemWithBook>
 
+export function withTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
+    return prisma.$transaction(fn)
+}
+
 
 //refatorar Após merge
 export async function findUserByEmail(userId: string): Promise<boolean> {
