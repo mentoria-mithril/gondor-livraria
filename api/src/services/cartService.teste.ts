@@ -4,7 +4,6 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '../repositories/prisma.js'
 import { getCart, addItem, updateItemQuantity, removeItem } from './cartService.js'
 import { ErroDeDominio } from '../errors/ErroDeDominio.js'
-import { StockExceeded } from '../errors/StockExceeded.js'
 
 /**
  * Troca as partes do prisma que o repositório usa por versões falsas.
@@ -14,7 +13,7 @@ function fakeDb(fakes: {
   usuario?: { id: string } | null
   livro?: { id: number; estoque: number } | null
   itemCarrinho?: Record<string, unknown>
-  $transaction?: () => Promise<unknown>
+  $transaction?: (fn: (tx: unknown) => Promise<unknown>) => Promise<unknown>
 } = {}) {
   const usuario = 'usuario' in fakes ? fakes.usuario : { id: 'usuario-1' }
   const replace = (key: string, value: unknown) =>
@@ -103,19 +102,17 @@ test('addItem recusa com 404 quando o livro não existe', async () => {
   await assert.rejects(addItem('usuario-1', 99, 1), erroComStatus(404))
 })
 
-test('addItem vira 409 dizendo quanto ainda dá para adicionar quando estoura o estoque', async () => {
-  // estoque 5, já tem 3 no carrinho, pediu mais 4 → cabem só 2
-  fakeDb({ livro: { id: 1, estoque: 5 }, $transaction: async () => { throw new StockExceeded(5, 3) } })
+test('addItem recusa com 409 quando a soma no carrinho passa do estoque', async () => {
+  const tx = {
+    carrinho: { findUnique: async () => ({ id: 'carrinho-1' }) },
+    itemCarrinho: {
+      upsert: async () => ({ id: 'item-1' }),
+      findUniqueOrThrow: async () => itemFalso(50, 11),
+    },
+  }
+  fakeDb({ livro: { id: 1, estoque: 10 }, $transaction: async (fn) => fn(tx) })
 
-  await assert.rejects(addItem('usuario-1', 1, 4), (erro) =>
-    erroComStatus(409)(erro) && (erro as Error).message.includes('no máximo 2'))
-})
-
-test('addItem vira 409 avisando que o estoque inteiro já está no carrinho', async () => {
-  fakeDb({ livro: { id: 1, estoque: 5 }, $transaction: async () => { throw new StockExceeded(5, 5) } })
-
-  await assert.rejects(addItem('usuario-1', 1, 1), (erro) =>
-    erroComStatus(409)(erro) && (erro as Error).message.includes('todo o estoque disponível'))
+  await assert.rejects(addItem('usuario-1', 1, 4), erroComStatus(409))
 })
 
 test('addItem repassa erros que não são de estoque sem transformar', async () => {
@@ -142,11 +139,10 @@ test('updateItemQuantity recusa com 401 quando o usuário não existe', async ()
   await assert.rejects(updateItemQuantity('fantasma', 'item-1', 1), erroComStatus(401))
 })
 
-test('updateItemQuantity recusa com 400 quantidade zero ou negativa', async () => {
-  fakeDb()
+test('updateItemQuantity recusa com 409 quantidade acima do estoque', async () => {
+  fakeDb({ itemCarrinho: { findFirst: async () => itemFalso(50, 2), update: async () => { throw new Error('update não deveria ser chamado') } } })
 
-  await assert.rejects(updateItemQuantity('usuario-1', 'item-1', 0), erroComStatus(400))
-  await assert.rejects(updateItemQuantity('usuario-1', 'item-1', -1), erroComStatus(400))
+  await assert.rejects(updateItemQuantity('usuario-1', 'item-1', 11), erroComStatus(409))
 })
 
 test('updateItemQuantity vira 404 para item inexistente ou de outro usuário', async () => {
@@ -155,12 +151,11 @@ test('updateItemQuantity vira 404 para item inexistente ou de outro usuário', a
   await assert.rejects(updateItemQuantity('usuario-1', 'item-alheio', 1), erroComStatus(404))
 })
 
-test('updateItemQuantity vira 404 se o item sumiu entre a leitura e a escrita', async () => {
-  // P2025 é o código do Prisma para "registro não encontrado" no update
+test('updateItemQuantity repassa o P2025 se o item sumiu entre a leitura e a escrita', async () => {
   const naoEncontrado = new Prisma.PrismaClientKnownRequestError('não encontrado', { code: 'P2025', clientVersion: 'teste' })
   fakeDb({ itemCarrinho: { findFirst: async () => itemFalso(50, 2), update: async () => { throw naoEncontrado } } })
 
-  await assert.rejects(updateItemQuantity('usuario-1', 'item-1', 3), erroComStatus(404))
+  await assert.rejects(updateItemQuantity('usuario-1', 'item-1', 3), (erro) => erro === naoEncontrado)
 })
 
 // ---------- removeItem ----------

@@ -47,7 +47,7 @@ export async function findCartItemsByUserId(userId: string): Promise<CartItem[]>
     })
 }
 
-export async function findCartItemOfUser(userId: string, itemId: string): Promise<CartItem | null> {
+export async function findCartItemOfUser(userId: string, itemId: string): Promise<CartItem | null>{
     return prisma.itemCarrinho.findFirst({
         where: { id: itemId, carrinho: { usuarioId: userId } },
         ...itemWithBook,
@@ -59,11 +59,11 @@ export async function updateItemQuantity(
     itemId: string,
     quantity: number
 ): Promise<CartItem> {
-        return await prisma.itemCarrinho.update({
-            where: { id: itemId, carrinho: { usuarioId: userId } },
-            data: { quantidade: quantity },
-            ...itemWithBook,
-        })
+    return prisma.itemCarrinho.update({
+        where: { id: itemId, carrinho: { usuarioId: userId } },
+        data: { quantidade: quantity },
+        ...itemWithBook,
+    })
 }
 
 export async function deleteItemFromCart(userId: string, itemId: string): Promise<number> {
