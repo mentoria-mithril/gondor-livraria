@@ -1,5 +1,5 @@
-import { StatusDaApi } from '@/components/StatusDaApi'
-import Link from 'next/link'
+import { StatusDaApi } from '@/components/StatusDaApi';
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -43,5 +43,5 @@ export default function Home() {
         <code className="font-mono">README.md</code> e nas issues do repositório.
       </footer>
     </main>
-  )
+  );
 }

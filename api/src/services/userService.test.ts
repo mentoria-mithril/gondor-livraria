@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ErroDeDominio } from '../errors/ErroDeDominio.js';
 import { registerUser } from './userService.js';
+import { selectUser } from '../repositories/userRepository.js';
 
 const fakeUser = {
     id: 'uuid-fake',
@@ -53,6 +54,6 @@ test('Cadastro com email novo chama create e não expõe senha.', async () => {
     );
     assert.equal(hashCalled, true);
     assert.deepEqual(result, fakeUser);
-    assert.ok(!('senha' in result));
+    assert.equal("senha" in selectUser, false);
 });
 

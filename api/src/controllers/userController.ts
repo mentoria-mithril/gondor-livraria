@@ -7,6 +7,7 @@ export async function registerUser(req: Request, res: Response): Promise<void> {
     const input: RegisterUserInput = registerUserSchema.parse(req.body);
     
     const user: PublicUser = await registerUserService(input);
+
     res.status(201).json(user);
 }
 
