@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express'
 import { LivroConsulta } from '../types/livro.type.js'
-import { buscarLivros } from '../services/livroServico.js'
+import { buscarLivros, buscarLivro } from '../services/livroServico.js'
 
 export async function obterLivros(req: Request, res: Response): Promise<void> {
 
@@ -18,4 +18,9 @@ export async function obterLivros(req: Request, res: Response): Promise<void> {
   }
 
   res.json(livros)
+}
+
+export async function obterLivroPorId(req: Request, res: Response): Promise<void> {
+    const livro = await buscarLivro(req.params.id)
+    res.status(200).json(livro)
 }

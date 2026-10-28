@@ -5,3 +5,5 @@ export const livroConsultaSchema = z.object({
     categoria: z.string().min(1).optional(),
     pagina: z.number().int().min(1).default(1)
 });
+
+export const livroIdSchema = z.coerce.number().int().positive();
