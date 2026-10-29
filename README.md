@@ -153,10 +153,10 @@ POST   /api/auth                  login
 GET    /api/livros                lista, com ?busca=, ?categoria=, ?pagina=
 GET    /api/livros/:id            detalhe
 
-GET    /api/cart                  o carrinho do usuário logado
-POST   /api/cart/items            adiciona um livro (soma se já estiver lá)
-PATCH  /api/cart/items/:itemId    muda a quantidade
-DELETE /api/cart/items/:itemId    remove
+GET    /api/carts                  o carrinho do usuário logado
+POST   /api/carts/items            adiciona um livro (soma se já estiver lá)
+PATCH  /api/carts/items/:itemId    muda a quantidade
+DELETE /api/carts/items/:itemId    remove
 
 POST   /api/pedidos               fecha o carrinho e vira pedido
 GET    /api/pedidos               os pedidos do usuário logado
