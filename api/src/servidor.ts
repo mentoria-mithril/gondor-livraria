@@ -6,7 +6,7 @@ import { rotaNaoEncontrada } from './middlewares/rotaNaoEncontrada.js'
 
 /**
  * Monta o app sem subir servidor. Separado do index.ts de propósito: é isto que
- * permite um teste importar o app e chamar as rotas sem ocupar porta.
+ * permite um teste importar o app e request as rotas sem ocupar porta.
  */
 export function criarServidor() {
   const app = express()
