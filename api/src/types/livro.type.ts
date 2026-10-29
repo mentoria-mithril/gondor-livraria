@@ -19,14 +19,8 @@ export interface LivroConsultaDTO {
     estoque: number
 }
 
-export interface LivroResponseDTO {
-    id: number,
-    titulo: string,
-    autor: string,
-    categoria: string,
+export interface LivroDetalheDTO extends LivroConsultaDTO {
     sinopse: string,
-    preco: number,
-    estoque: number,
     dtCriacao: string
 }
 

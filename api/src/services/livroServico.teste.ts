@@ -1,4 +1,4 @@
-import type {  LivroConsultaResponse, LivroConsultaDTO, LivroResponseDTO } from "../types/livro.type.js";
+import type {  LivroConsultaResponse, LivroConsultaDTO, LivroDetalheDTO } from "../types/livro.type.js";
 import {z, ZodError} from "zod";
 import {describe, test} from 'node:test'
 import assert from 'node:assert/strict'
@@ -76,7 +76,7 @@ test('serviço de livro retorna mensagem quando não há resultados', async () =
 });
 describe('buscarLivroPorId', () => {
     test('retorna os detalhes quando o livro existe', async () => {
-        const esperado: LivroResponseDTO = {
+        const esperado: LivroDetalheDTO = {
             id: 1,
             titulo: 'Memórias Póstumas de Brás Cubas',
             autor: 'Machado de Assis',
@@ -87,7 +87,7 @@ describe('buscarLivroPorId', () => {
             dtCriacao: '2026-09-13T18:23:49.000Z'
         }
 
-        const livroDetalhes = async (livro: LivroResponseDTO | null) => {
+        const livroDetalhes = async (livro: LivroDetalheDTO | null) => {
             if (livro == null){
                 throw new ErroDeDominioTeste('Livro não encontrado! Tente novamente.', 404)
             }
@@ -98,7 +98,7 @@ describe('buscarLivroPorId', () => {
     })
 
     test('lança ErroDeDominio 404 quando o livro não existe', async () => {
-        const livroDetalhes = async (livro: LivroResponseDTO | null) => {
+        const livroDetalhes = async (livro: LivroDetalheDTO | null) => {
             if (livro == null) {
                 throw new ErroDeDominioTeste('Livro não encontrado! Tente novamente.', 404)
             }

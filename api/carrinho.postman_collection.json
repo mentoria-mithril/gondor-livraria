@@ -1,0 +1,1639 @@
+{
+  "info": {
+    "name": "Gondor - carrinho",
+    "description": "Testes da API de carrinho. Rode pelo Collection Runner, na ordem.\n\nAntes: preencha userId (usuário real) e bookId (livro com estoque ≥ 2). Opcionais: bookStock (estoque exato do livro) e otherUserId (segundo usuário) liberam os testes de estoque somado e de isolamento.\n\nAtenção: os testes esvaziam o carrinho do userId.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('não é erro 500', () => pm.expect(pm.response.code).to.be.below(500));",
+          "pm.test('responde em menos de 2s', () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3333/api"
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "bookId",
+      "value": "1"
+    },
+    {
+      "key": "bookStock",
+      "value": ""
+    },
+    {
+      "key": "otherUserId",
+      "value": ""
+    },
+    {
+      "key": "missingUuid",
+      "value": "3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f"
+    },
+    {
+      "key": "itemId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Configuração",
+      "description": "Confere as variáveis antes de rodar o resto.",
+      "item": [
+        {
+          "name": "Variáveis preenchidas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('API de pé', () => pm.response.to.have.status(200));",
+                  "pm.test('userId preenchido (UUID de um usuário real)', () =>",
+                  "  pm.expect(pm.collectionVariables.get('userId')).to.match(/^[0-9a-f-]{36}$/i));",
+                  "pm.test('bookId preenchido (livro com estoque ≥ 2)', () =>",
+                  "  pm.expect(Number(pm.collectionVariables.get('bookId'))).to.be.above(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/saude"
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Identificação do usuário (401)",
+      "description": "Sem um x-user-id válido nenhuma rota do carrinho responde.",
+      "item": [
+        {
+          "name": "GET sem header",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"x-user-id\"', () => pm.expect(pm.response.json().erro).to.include('x-user-id'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/cart"
+          }
+        },
+        {
+          "name": "GET com header que não é UUID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"x-user-id\"', () => pm.expect(pm.response.json().erro).to.include('x-user-id'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "abc"
+              }
+            ],
+            "url": "{{baseUrl}}/cart"
+          }
+        },
+        {
+          "name": "PATCH sem header",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/{{missingUuid}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE sem header",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/cart/items/{{missingUuid}}"
+          }
+        },
+        {
+          "name": "POST com UUID de usuário que não existe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Usuário\"', () => pm.expect(pm.response.json().erro).to.include('Usuário'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{missingUuid}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": {{bookId}},\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "GET com UUID de usuário que não existe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Usuário\"', () => pm.expect(pm.response.json().erro).to.include('Usuário'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{missingUuid}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart"
+          }
+        },
+        {
+          "name": "PATCH com UUID de usuário que não existe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Usuário\"', () => pm.expect(pm.response.json().erro).to.include('Usuário'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{missingUuid}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/{{missingUuid}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE com UUID de usuário que não existe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Usuário\"', () => pm.expect(pm.response.json().erro).to.include('Usuário'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{missingUuid}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/{{missingUuid}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Caminho feliz",
+      "description": "Roda em ordem: esvazia, adiciona, soma, altera, remove.",
+      "item": [
+        {
+          "name": "Esvaziar carrinho (preparação)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const base = pm.collectionVariables.get('baseUrl');",
+                  "const user = pm.collectionVariables.get('userId');",
+                  "for (const it of pm.response.json().items) {",
+                  "  pm.sendRequest({ url: `${base}/cart/items/${it.id}`, method: 'DELETE', header: { 'x-user-id': user } },",
+                  "    (err, res) => pm.test(`removeu ${it.title}`, () => pm.expect(res.code).to.eql(204)));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart"
+          }
+        },
+        {
+          "name": "Ver carrinho vazio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('carrinho vazio', () => pm.expect(pm.response.json()).to.eql({ items: [], total: 0 }));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart"
+          }
+        },
+        {
+          "name": "Adicionar sem quantity (padrão = 1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "",
+                  "const item = pm.response.json();",
+                  "pm.test('formato do item', () => {",
+                  "  pm.expect(item).to.have.all.keys('id', 'bookId', 'title', 'unitPrice', 'quantity', 'subtotal');",
+                  "  pm.expect(item.id).to.match(/^[0-9a-f-]{36}$/i);",
+                  "  pm.expect(item.unitPrice).to.be.a('number');",
+                  "  pm.expect(item.subtotal).to.be.a('number');",
+                  "});",
+                  "pm.test('bookId é o livro pedido', () => pm.expect(item.bookId).to.eql(Number(pm.collectionVariables.get('bookId'))));",
+                  "pm.test('subtotal = unitPrice × quantity (2 casas)', () =>",
+                  "  pm.expect(item.subtotal).to.eql(Math.round(item.unitPrice * item.quantity * 100) / 100));",
+                  "",
+                  "pm.test('quantity padrão é 1', () => pm.expect(item.quantity).to.eql(1));",
+                  "pm.collectionVariables.set('itemId', item.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": {{bookId}}\n}"
+            }
+          }
+        },
+        {
+          "name": "Adicionar o mesmo livro de novo (soma, não duplica)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "",
+                  "const item = pm.response.json();",
+                  "pm.test('formato do item', () => {",
+                  "  pm.expect(item).to.have.all.keys('id', 'bookId', 'title', 'unitPrice', 'quantity', 'subtotal');",
+                  "  pm.expect(item.id).to.match(/^[0-9a-f-]{36}$/i);",
+                  "  pm.expect(item.unitPrice).to.be.a('number');",
+                  "  pm.expect(item.subtotal).to.be.a('number');",
+                  "});",
+                  "pm.test('bookId é o livro pedido', () => pm.expect(item.bookId).to.eql(Number(pm.collectionVariables.get('bookId'))));",
+                  "pm.test('subtotal = unitPrice × quantity (2 casas)', () =>",
+                  "  pm.expect(item.subtotal).to.eql(Math.round(item.unitPrice * item.quantity * 100) / 100));",
+                  "",
+                  "pm.test('mesma linha (mesmo id)', () => pm.expect(item.id).to.eql(pm.collectionVariables.get('itemId')));",
+                  "pm.test('quantidade somada: 1 + 1 = 2', () => pm.expect(item.quantity).to.eql(2));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": {{bookId}},\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Ver carrinho com 1 item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const cart = pm.response.json();",
+                  "pm.test('uma linha só', () => pm.expect(cart.items).to.have.lengthOf(1));",
+                  "pm.test('quantidade 2', () => pm.expect(cart.items[0].quantity).to.eql(2));",
+                  "pm.test('total = soma dos subtotais', () =>",
+                  "  pm.expect(cart.total).to.eql(cart.items.reduce((s, i) => s + i.subtotal, 0)));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart"
+          }
+        },
+        {
+          "name": "Alterar quantidade para 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "const item = pm.response.json();",
+                  "pm.test('formato do item', () => {",
+                  "  pm.expect(item).to.have.all.keys('id', 'bookId', 'title', 'unitPrice', 'quantity', 'subtotal');",
+                  "  pm.expect(item.id).to.match(/^[0-9a-f-]{36}$/i);",
+                  "  pm.expect(item.unitPrice).to.be.a('number');",
+                  "  pm.expect(item.subtotal).to.be.a('number');",
+                  "});",
+                  "pm.test('bookId é o livro pedido', () => pm.expect(item.bookId).to.eql(Number(pm.collectionVariables.get('bookId'))));",
+                  "pm.test('subtotal = unitPrice × quantity (2 casas)', () =>",
+                  "  pm.expect(item.subtotal).to.eql(Math.round(item.unitPrice * item.quantity * 100) / 100));",
+                  "",
+                  "pm.test('quantidade agora é 1', () => pm.expect(item.quantity).to.eql(1));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/{{itemId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Remover item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 204', () => pm.response.to.have.status(204));",
+                  "pm.test('sem corpo', () => pm.expect(pm.response.text()).to.eql(''));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/{{itemId}}"
+          }
+        },
+        {
+          "name": "Ver carrinho vazio de novo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('carrinho vazio', () => pm.expect(pm.response.json()).to.eql({ items: [], total: 0 }));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Entrada inválida (400)",
+      "description": "O zod recusa antes de chegar ao service.",
+      "item": [
+        {
+          "name": "POST sem bookId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Dados inválidos\"', () => pm.expect(pm.response.json().erro).to.include('Dados inválidos'));",
+                  "",
+                  "pm.test('lista os campos inválidos', () => pm.expect(pm.response.json().campos).to.be.an('array').that.is.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "POST bookId como texto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Dados inválidos\"', () => pm.expect(pm.response.json().erro).to.include('Dados inválidos'));",
+                  "",
+                  "pm.test('lista os campos inválidos', () => pm.expect(pm.response.json().campos).to.be.an('array').that.is.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": \"1\",\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "POST bookId negativo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Dados inválidos\"', () => pm.expect(pm.response.json().erro).to.include('Dados inválidos'));",
+                  "",
+                  "pm.test('lista os campos inválidos', () => pm.expect(pm.response.json().campos).to.be.an('array').that.is.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": -1,\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "POST quantity zero",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Dados inválidos\"', () => pm.expect(pm.response.json().erro).to.include('Dados inválidos'));",
+                  "",
+                  "pm.test('lista os campos inválidos', () => pm.expect(pm.response.json().campos).to.be.an('array').that.is.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": {{bookId}},\n  \"quantity\": 0\n}"
+            }
+          }
+        },
+        {
+          "name": "POST quantity negativa",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Dados inválidos\"', () => pm.expect(pm.response.json().erro).to.include('Dados inválidos'));",
+                  "",
+                  "pm.test('lista os campos inválidos', () => pm.expect(pm.response.json().campos).to.be.an('array').that.is.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": {{bookId}},\n  \"quantity\": -3\n}"
+            }
+          }
+        },
+        {
+          "name": "POST quantity decimal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Dados inválidos\"', () => pm.expect(pm.response.json().erro).to.include('Dados inválidos'));",
+                  "",
+                  "pm.test('lista os campos inválidos', () => pm.expect(pm.response.json().campos).to.be.an('array').that.is.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": {{bookId}},\n  \"quantity\": 1.5\n}"
+            }
+          }
+        },
+        {
+          "name": "POST campos antigos em português",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Dados inválidos\"', () => pm.expect(pm.response.json().erro).to.include('Dados inválidos'));",
+                  "",
+                  "pm.test('lista os campos inválidos', () => pm.expect(pm.response.json().campos).to.be.an('array').that.is.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"livroId\": 1,\n  \"quantidade\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "POST JSON malformado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400 (não 500)', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"bookId\": 1, "
+            }
+          }
+        },
+        {
+          "name": "PATCH itemId que não é UUID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Dados inválidos\"', () => pm.expect(pm.response.json().erro).to.include('Dados inválidos'));",
+                  "",
+                  "pm.test('lista os campos inválidos', () => pm.expect(pm.response.json().campos).to.be.an('array').that.is.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/123",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "PATCH quantity zero",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Dados inválidos\"', () => pm.expect(pm.response.json().erro).to.include('Dados inválidos'));",
+                  "",
+                  "pm.test('lista os campos inválidos', () => pm.expect(pm.response.json().campos).to.be.an('array').that.is.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/{{missingUuid}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 0\n}"
+            }
+          }
+        },
+        {
+          "name": "PATCH sem body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Dados inválidos\"', () => pm.expect(pm.response.json().erro).to.include('Dados inválidos'));",
+                  "",
+                  "pm.test('lista os campos inválidos', () => pm.expect(pm.response.json().campos).to.be.an('array').that.is.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/{{missingUuid}}"
+          }
+        },
+        {
+          "name": "DELETE itemId que não é UUID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Dados inválidos\"', () => pm.expect(pm.response.json().erro).to.include('Dados inválidos'));",
+                  "",
+                  "pm.test('lista os campos inválidos', () => pm.expect(pm.response.json().campos).to.be.an('array').that.is.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/abc"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Regras de negócio (404 / 409)",
+      "description": "Entrada válida, mas o pedido não pode ser atendido.",
+      "item": [
+        {
+          "name": "Esvaziar carrinho (preparação)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const base = pm.collectionVariables.get('baseUrl');",
+                  "const user = pm.collectionVariables.get('userId');",
+                  "for (const it of pm.response.json().items) {",
+                  "  pm.sendRequest({ url: `${base}/cart/items/${it.id}`, method: 'DELETE', header: { 'x-user-id': user } },",
+                  "    (err, res) => pm.test(`removeu ${it.title}`, () => pm.expect(res.code).to.eql(204)));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart"
+          }
+        },
+        {
+          "name": "POST livro que não existe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Livro\"', () => pm.expect(pm.response.json().erro).to.include('Livro'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": 999999,\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "POST quantidade acima do estoque",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 409', () => pm.response.to.have.status(409));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"estoque\"', () => pm.expect(pm.response.json().erro).to.include('estoque'));",
+                  "const erroAdd = pm.response.json().erro;",
+                  "pm.test('mensagem informa 0 no carrinho e o pedido de 999999', () => {",
+                  "  pm.expect(erroAdd).to.include('você já tem 0 no carrinho');",
+                  "  pm.expect(erroAdd).to.include('mais 999999');",
+                  "});",
+                  "if (pm.collectionVariables.get('bookStock')) {",
+                  "  const stock = pm.collectionVariables.get('bookStock');",
+                  "  pm.test('mensagem informa o estoque e o máximo que ainda cabe', () => {",
+                  "    pm.expect(erroAdd).to.include(`há ${stock} unidades`);",
+                  "    pm.expect(erroAdd).to.include(`no máximo ${stock}`);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": {{bookId}},\n  \"quantity\": 999999\n}"
+            }
+          }
+        },
+        {
+          "name": "POST enche o carrinho até o estoque",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('bookStock')) {",
+                  "  console.log('Pulado: preencha a variável bookStock (estoque atual do livro).');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('quantidade = estoque', () => pm.expect(pm.response.json().quantity).to.eql(Number(pm.collectionVariables.get('bookStock'))));",
+                  "pm.collectionVariables.set('itemId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": {{bookId}},\n  \"quantity\": {{bookStock}}\n}"
+            }
+          }
+        },
+        {
+          "name": "POST +1 passa do estoque somando com o carrinho",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('bookStock')) {",
+                  "  console.log('Pulado: preencha a variável bookStock (estoque atual do livro).');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 409', () => pm.response.to.have.status(409));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"estoque\"', () => pm.expect(pm.response.json().erro).to.include('estoque'));",
+                  "const stock = pm.collectionVariables.get('bookStock');",
+                  "const erroCheio = pm.response.json().erro;",
+                  "pm.test('mensagem informa estoque, quantidade no carrinho e pedido', () => {",
+                  "  pm.expect(erroCheio).to.include(`há ${stock} unidades`);",
+                  "  pm.expect(erroCheio).to.include(`você já tem ${stock} no carrinho`);",
+                  "  pm.expect(erroCheio).to.include('mais 1');",
+                  "});",
+                  "pm.test('avisa que todo o estoque já está no carrinho', () => pm.expect(erroCheio).to.include('todo o estoque disponível'));",
+                  "",
+                  "pm.sendRequest({ url: pm.collectionVariables.get('baseUrl') + '/cart', header: { 'x-user-id': pm.collectionVariables.get('userId') } },",
+                  "  (err, res) => pm.test('carrinho continua com o estoque (nada foi gravado)', () =>",
+                  "    pm.expect(res.json().items[0].quantity).to.eql(Number(pm.collectionVariables.get('bookStock')))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": {{bookId}},\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "PATCH exatamente no estoque",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('bookStock') || !pm.collectionVariables.get('itemId')) {",
+                  "  console.log('Pulado: preencha a variável bookStock (estoque atual do livro).');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('quantidade = estoque', () => pm.expect(pm.response.json().quantity).to.eql(Number(pm.collectionVariables.get('bookStock'))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/{{itemId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": {{bookStock}}\n}"
+            }
+          }
+        },
+        {
+          "name": "PATCH acima do estoque",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('itemId')) {",
+                  "  console.log('Pulado: preencha a variável itemId (rode o passo anterior).');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 409', () => pm.response.to.have.status(409));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"estoque\"', () => pm.expect(pm.response.json().erro).to.include('estoque'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/{{itemId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 999999\n}"
+            }
+          }
+        },
+        {
+          "name": "PATCH item que não existe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Item\"', () => pm.expect(pm.response.json().erro).to.include('Item'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/{{missingUuid}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE item que não existe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Item\"', () => pm.expect(pm.response.json().erro).to.include('Item'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/{{missingUuid}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Isolamento entre usuários",
+      "description": "Precisa de otherUserId (outro usuário real). Um usuário não vê nem mexe no item do outro: resposta 404, igual a item inexistente.",
+      "item": [
+        {
+          "name": "Esvaziar carrinho (preparação)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const base = pm.collectionVariables.get('baseUrl');",
+                  "const user = pm.collectionVariables.get('userId');",
+                  "for (const it of pm.response.json().items) {",
+                  "  pm.sendRequest({ url: `${base}/cart/items/${it.id}`, method: 'DELETE', header: { 'x-user-id': user } },",
+                  "    (err, res) => pm.test(`removeu ${it.title}`, () => pm.expect(res.code).to.eql(204)));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart"
+          }
+        },
+        {
+          "name": "Adicionar item com o usuário principal",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('otherUserId')) {",
+                  "  console.log('Pulado: preencha a variável otherUserId (id de um segundo usuário).');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('itemId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": {{bookId}},\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Outro usuário não vê o item",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('otherUserId')) {",
+                  "  console.log('Pulado: preencha a variável otherUserId (id de um segundo usuário).');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('item do principal não aparece', () =>",
+                  "  pm.expect(pm.response.json().items.map(i => i.id)).to.not.include(pm.collectionVariables.get('itemId')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{otherUserId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart"
+          }
+        },
+        {
+          "name": "Outro usuário não altera o item",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('otherUserId')) {",
+                  "  console.log('Pulado: preencha a variável otherUserId (id de um segundo usuário).');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Item\"', () => pm.expect(pm.response.json().erro).to.include('Item'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{otherUserId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/{{itemId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Outro usuário não remove o item",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('otherUserId')) {",
+                  "  console.log('Pulado: preencha a variável otherUserId (id de um segundo usuário).');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('corpo tem a mensagem em \"erro\"', () => pm.expect(pm.response.json().erro).to.be.a('string'));",
+                  "pm.test('mensagem menciona \"Item\"', () => pm.expect(pm.response.json().erro).to.include('Item'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{otherUserId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items/{{itemId}}"
+          }
+        },
+        {
+          "name": "Item continua no carrinho do principal",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('otherUserId')) {",
+                  "  console.log('Pulado: preencha a variável otherUserId (id de um segundo usuário).');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('item ainda está lá', () =>",
+                  "  pm.expect(pm.response.json().items.map(i => i.id)).to.include(pm.collectionVariables.get('itemId')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart"
+          }
+        },
+        {
+          "name": "Limpeza: esvaziar carrinho",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const base = pm.collectionVariables.get('baseUrl');",
+                  "const user = pm.collectionVariables.get('userId');",
+                  "for (const it of pm.response.json().items) {",
+                  "  pm.sendRequest({ url: `${base}/cart/items/${it.id}`, method: 'DELETE', header: { 'x-user-id': user } },",
+                  "    (err, res) => pm.test(`removeu ${it.title}`, () => pm.expect(res.code).to.eql(204)));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart"
+          }
+        }
+      ]
+    }
+  ]
+}
