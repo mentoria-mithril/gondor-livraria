@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { saudeRotas } from './saudeRotas.js'
+import { cartRoutes } from './cartRoutes.js'
 import { userRoutes } from './userRoutes.js'
 import { livroRotas } from './livroRotas.js'
 
@@ -15,6 +16,7 @@ import { livroRotas } from './livroRotas.js'
 export const rotas = Router()
 
 rotas.use(saudeRotas)
+rotas.use(cartRoutes)
 
 rotas.use(userRoutes)
 

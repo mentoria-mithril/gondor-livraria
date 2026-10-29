@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express'
 import { ErroDeDominio } from '../errors/ErroDeDominio.js'
 import { ZodError } from 'zod'
+import { Prisma } from '@prisma/client'
 
 /**
  * Último middleware da cadeia. É ele que decide o que o cliente vê quando algo
@@ -22,6 +23,11 @@ export function tratadorDeErros(
       erro: 'Dados inválidos.',
       campos: erro.issues.map((i) => ({ campo: i.path.join('.'), mensagem: i.message })),
     })
+    return
+  }
+
+  if (erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === 'P2025') {
+    res.status(404).json({ erro: 'Registro não encontrado.' })
     return
   }
 

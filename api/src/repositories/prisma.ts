@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { Prisma, PrismaClient } from '@prisma/client'
 
 /**
  * O ÚNICO lugar do projeto que instancia o Prisma. Serviço não importa daqui —
@@ -10,3 +10,5 @@ import { PrismaClient } from '@prisma/client'
 export const prisma = new PrismaClient({
   log: ['warn', 'error'],
 })
+
+export type Tx = Prisma.TransactionClient
