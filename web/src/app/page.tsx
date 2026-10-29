@@ -1,47 +1,47 @@
-import { ApiStatus } from '@/components/ApiStatus'
-import Link from 'next/link'
+import { StatusDaApi } from '@/components/StatusDaApi';
+import Link from 'next/link';
 
 export default function Home() {
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-16">
       <header>
-        <h1 className="text-3xl font-semibold tracking-tight">Bookstore</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Livraria</h1>
         <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-          Gondor team project starter. If the panel below is green, the environment is ready
-          and you can pick up your feature.
+          Esqueleto do projeto da turma Gondor. Se o quadro abaixo estiver verde, o
+          ambiente está inteiro e você pode pegar a sua fatia.
         </p>
       </header>
 
-      <ApiStatus />
+      <StatusDaApi />
 
       <section>
         <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">
-          What each pair is building
+          O que cada dupla constrói aqui
         </h2>
         <ul className="mt-3 space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
           <li>
-            <strong>Feature A — Account</strong> · registration, login, and authentication
+            <strong>Fatia A — Conta</strong> · cadastro, login e autenticação
           </li>
           <li>
-            <strong>Feature B — Catalog</strong> · search, filters, pagination, and details
+            <strong>Fatia B — Catálogo</strong> · busca, filtro, paginação e detalhe
           </li>
           <li>
-            <strong>Feature C — Cart</strong> · add, update, and remove items
+            <strong>Fatia C — Carrinho</strong> · adicionar, somar, alterar e remover
           </li>
           <li>
-            <strong>Feature D — Orders</strong> · checkout, inventory, and order history
+            <strong>Fatia D — Pedido</strong> · checkout, estoque e histórico
           </li>
         </ul>
       </section>
       <p className="mt-4 text-sm">
-        <Link href="/register" className="font-medium underline underline-offset-2">
-          Create an account
+        <Link href="/cadastro" className="font-medium underline underline-offset-2">
+          Criar conta
         </Link>
       </p>
       <footer className="text-sm text-zinc-500">
-        The full scope, data model, and acceptance criteria are in the{' '}
-        <code className="font-mono">README.md</code> and the repository issues.
+        O escopo completo, o modelo de dados e os critérios de aceite estão no{' '}
+        <code className="font-mono">README.md</code> e nas issues do repositório.
       </footer>
     </main>
-  )
+  );
 }

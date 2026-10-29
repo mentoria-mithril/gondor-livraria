@@ -1,30 +1,38 @@
 import type { NextFunction, Request, Response } from 'express'
-import { DomainError } from '../errors/DomainError.js'
+import { ErroDeDominio } from '../errors/ErroDeDominio.js'
 import { ZodError } from 'zod'
+import { Prisma } from '@prisma/client'
 
-/** Formats application errors for HTTP responses. */
+/**
+ * Último middleware da cadeia. É ele que decide o que o cliente vê quando algo
+ * dá errado — nenhum controlador precisa montar resposta de erro na mão.
+ */
 export function tratadorDeErros(
-  error: unknown,
+  erro: unknown,
   _req: Request,
   res: Response,
   _next: NextFunction,
 ): void {
-  if (error instanceof DomainError) {
-    res.status(error.status).json({ error: error.message })
+  if (erro instanceof ErroDeDominio) {
+    res.status(erro.status).json({ erro: erro.message })
     return
   }
 
-  if (error instanceof ZodError) {
+  if (erro instanceof ZodError) {
     res.status(400).json({
-      error: 'Invalid request data.',
-      fields: error.issues.map((issue) => ({
-        field: issue.path.join('.'),
-        message: issue.message,
-      })),
+      erro: 'Dados inválidos.',
+      campos: erro.issues.map((i) => ({ campo: i.path.join('.'), mensagem: i.message })),
     })
     return
   }
 
-  console.error('[unhandled error]', error)
-  res.status(500).json({ error: 'Internal server error.' })
+  if (erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === 'P2025') {
+    res.status(404).json({ erro: 'Registro não encontrado.' })
+    return
+  }
+
+  // Chegou aqui: é bug. Loga inteiro no servidor e devolve pouco para o cliente
+  // — mensagem de exceção pode vazar nome de tabela e caminho de arquivo.
+  console.error('[erro não tratado]', erro)
+  res.status(500).json({ erro: 'Erro interno.' })
 }

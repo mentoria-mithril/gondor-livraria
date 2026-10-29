@@ -1,61 +1,42 @@
-import { Prisma } from '@prisma/client'
 import { prisma } from './prisma.js'
+import { Prisma } from '@prisma/client'
 
-const publicUserSelect = {
-  id: true,
-  name: true,
-  email: true,
-  createdAt: true,
-} satisfies Prisma.UserSelect
+export const selectUser = {
+    id: true,
+    nome: true,
+    email: true,
+    dtCriacao: true,
+} satisfies Prisma.UsuarioSelect
 
-type StoredPublicUser = Prisma.UserGetPayload<{
-  select: typeof publicUserSelect
-}>
-
-export type PublicUser = {
-  id: string
-  name: string
-  email: string
-  createdAt: Date
-}
-
-function toPublicUser(user: StoredPublicUser): PublicUser {
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    createdAt: user.createdAt,
-  }
-}
+export type PublicUser = Prisma.UsuarioGetPayload<{ select: typeof selectUser }>
 
 export async function findUserByEmail(email: string): Promise<PublicUser | null> {
-  const user = await prisma.user.findUnique({
-    where: { email },
-    select: publicUserSelect,
-  })
-
-  return user ? toPublicUser(user) : null
+    return prisma.usuario.findUnique({
+        where: { email },
+        select: selectUser,
+    })
 }
 
 export async function createUserWithCart(data: {
-  name: string
-  email: string
-  passwordHash: string
+    nome: string
+    email: string
+    senhaHash: string
 }): Promise<PublicUser> {
-  return prisma.$transaction(async (transaction) => {
-    const user = await transaction.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        password: data.passwordHash,
-      },
-      select: publicUserSelect,
-    })
+    return prisma.$transaction(async (tx) => {
+        const usuario = await tx.usuario.create({
+            data: {
+                nome: data.nome,
+                email: data.email,
+                senha: data.senhaHash,
+            },
+            select: selectUser,
+        })
 
-    await transaction.cart.create({
-      data: { userId: user.id },
-    })
+        await tx.carrinho.create({
+            data: { usuarioId: usuario.id },
+        })
 
-    return toPublicUser(user)
-  })
+        return usuario
+    })
 }
+

@@ -1,9 +1,10 @@
-import { z } from 'zod'
+import { z } from 'zod';
 
-export const userRegistrationSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required.'),
-  email: z.string().trim().email('Invalid email address.').transform((email) => email.toLowerCase()),
-  password: z.string().min(6, 'Password must be at least 6 characters.'),
-})
+export const registerUserSchema = z.object({
+    nome: z.string().trim().min(1, 'Informe o nome.'),
+    email: z.string().trim().email('Email invalido.'),
+    senha: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres.'),
+});
 
-export type UserRegistrationInput = z.infer<typeof userRegistrationSchema>
+export type RegisterUserInput = z.infer<typeof registerUserSchema>;
+

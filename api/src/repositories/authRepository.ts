@@ -1,22 +1,37 @@
-import { Prisma } from "@prisma/client";
-import {prisma} from "./prisma.js"
+import { prisma } from './prisma.js'
+import { Prisma } from '@prisma/client'
+import { selectUser } from './userRepository.js'
 
-export const selectUsuarioAutenticacao ={
-    id: true,
-    name: true,
-    email: true,
-    password: true,
-    createdAt: true,
-} satisfies Prisma.UserSelect;
+const selectUsuarioComSenha = {
+    ...selectUser,
+    senha: true,
+} satisfies Prisma.UsuarioSelect
 
-export type UsuarioParaAutenticacao = Prisma.UserGetPayload<{select: typeof selectUsuarioAutenticacao}>;
+export type UsuarioComSenha = Prisma.UsuarioGetPayload<{ select: typeof selectUsuarioComSenha }>
 
-export async function findUserForAuthentication(email: string): Promise<UsuarioParaAutenticacao | null> {
-    return prisma.user.findUnique({ 
-        where: { email }, 
-        select: selectUsuarioAutenticacao,
+export type SessaoSalva = {
+    usuarioId: string
+    expiraEm: Date
+}
+
+export async function findUserForAuthentication(email: string): Promise<UsuarioComSenha | null> {
+    return prisma.usuario.findUnique({
+        where: { email },
+        select: selectUsuarioComSenha,
     })
 }
 
+export async function criarSessao(data: { token: string; usuarioId: string; expiraEm: Date }): Promise<void> {
+    await prisma.sessao.create({ data })
+}
 
+export async function buscarSessao(token: string): Promise<SessaoSalva | null> {
+    return prisma.sessao.findUnique({
+        where: { token },
+        select: { usuarioId: true, expiraEm: true },
+    })
+}
 
+export async function apagarSessao(token: string): Promise<void> {
+    await prisma.sessao.deleteMany({ where: { token } })
+}

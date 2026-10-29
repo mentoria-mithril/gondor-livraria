@@ -5,24 +5,39 @@
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"] 
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  extensions = [unaccent]
 }
 
-model User {
+model Usuario {
   id         String   @id @default(uuid())
-  name       String
+  nome       String
   email      String   @unique
-  password      String // sempre hash, nunca texto puro
-  createdAt  DateTime @default(now()) @map("createdAt")
+  senha      String // sempre hash, nunca texto puro
+  dtCriacao  DateTime @default(now()) @map("dt_criacao")
 
-  cart Cart?
+  carrinho Carrinho?
   pedidos  Pedido[]
+  sessoes  Sessao[]
 
-  @@map("user")
+  @@map("usuario")
+}
+
+model Sessao {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  usuarioId String   @map("usuario_id")
+  expiraEm  DateTime @map("expira_em")
+  dtCriacao DateTime @default(now()) @map("dt_criacao")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("sessao")
 }
 
 model Livro {
@@ -45,15 +60,15 @@ model Livro {
   @@map("livro")
 }
 
-model Cart {
+model Carrinho {
   id             String   @id @default(uuid())
-  userId      String   @unique @map("userid")
+  usuarioId      String   @unique @map("usuario_id")
   dtAtualizacao  DateTime @updatedAt @map("dt_atualizacao")
 
-  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usuario Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   itens   ItemCarrinho[]
 
-  @@map("cart")
+  @@map("carrinho")
 }
 
 model ItemCarrinho {
@@ -62,7 +77,7 @@ model ItemCarrinho {
   livroId     Int    @map("livro_id")
   quantidade  Int
 
-  cart Cart @relation(fields: [carrinhoId], references: [id], onDelete: Cascade)
+  carrinho Carrinho @relation(fields: [carrinhoId], references: [id], onDelete: Cascade)
   livro    Livro    @relation(fields: [livroId], references: [id])
 
   // É ESTA linha que impede duas linhas do mesmo livro no mesmo carrinho.
@@ -81,15 +96,15 @@ enum StatusPedido {
 
 model Pedido {
   id          String       @id @default(uuid())
-  userId   String       @map("userId")
+  usuarioId   String       @map("usuario_id")
   status      StatusPedido @default(AGUARDANDO_PAGAMENTO)
   valorTotal  Decimal      @map("valor_total") @db.Decimal(10, 2)
   dtCriacao   DateTime     @default(now()) @map("dt_criacao")
 
-  user User      @relation(fields: [userId], references: [id])
+  usuario Usuario      @relation(fields: [usuarioId], references: [id])
   itens   ItemPedido[]
 
-  @@index([userId, dtCriacao])
+  @@index([usuarioId, dtCriacao])
   @@map("pedido")
 }
 

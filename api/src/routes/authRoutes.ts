@@ -1,9 +1,9 @@
-import { Router } from 'express'
-import { login } from '../controllers/authController.js'
-import { envolver } from '../middlewares/envolver.js'
-import { validate } from '../middlewares/validate.js'
-import { loginSchema } from '../schemas/authSchema.js'
+import { Router } from 'express';
+import { login, logout } from '../controllers/authController.js';
+import { envolver } from '../middlewares/envolver.js';
+import { autenticar } from '../middlewares/autenticar.js';
 
-export const authRoutes = Router()
+export const authRoutes = Router();
 
-authRoutes.post('/auth', validate(loginSchema), envolver(login))
+authRoutes.post('/auth', envolver(login));
+authRoutes.delete('/auth', envolver(autenticar), envolver(logout));

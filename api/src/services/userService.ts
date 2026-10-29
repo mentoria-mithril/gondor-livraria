@@ -1,53 +1,61 @@
-import { Prisma } from '@prisma/client'
-import { DomainError } from '../errors/DomainError.js'
-import type { UserRegistrationInput } from '../schemas/userSchema.js'
-import {
-  createUserWithCart,
-  findUserByEmail,
-  type PublicUser,
-} from '../repositories/userRepository.js'
-import { hashPassword } from './passwordService.js'
+import { ErroDeDominio } from '../errors/ErroDeDominio.js';
+import type { RegisterUserInput } from '../schemas/userSchema.js';
+import { 
+    findUserByEmail,
+    createUserWithCart,
+    type PublicUser,
+} from '../repositories/userRepository.js';
+import { hashPassword } from './passwordService.js';
+import { Prisma } from '@prisma/client';
 
-type RegistrationDependencies = {
-  findUserByEmail: typeof findUserByEmail
-  createUserWithCart: typeof createUserWithCart
-  hashPassword: typeof hashPassword
+type RegisterUserDependencies = {
+    findUserByEmail: typeof findUserByEmail;
+    createUserWithCart: typeof createUserWithCart;
+    hashPassword: typeof hashPassword;
+};
+
+const defaultDependencies: RegisterUserDependencies = {
+    findUserByEmail,
+    createUserWithCart,
+    hashPassword,
+};
+
+function normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
 }
 
-const defaultDependencies: RegistrationDependencies = {
-  findUserByEmail,
-  createUserWithCart,
-  hashPassword,
-}
-
-
-
-function isUniqueEmailConflict(error: unknown): boolean {
-  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002'
+function uniqueEmailConflict(error: unknown): boolean {
+    return (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+    );
 }
 
 export async function registerUser(
-  input: UserRegistrationInput,
-  dependencies: RegistrationDependencies = defaultDependencies,
+    input: RegisterUserInput,
+    deps: RegisterUserDependencies = defaultDependencies
 ): Promise<PublicUser> {
-  const existingUser = await dependencies.findUserByEmail(input.email)
+    const email = normalizeEmail(input.email);
+    const nome = input.nome.trim();
 
-  if (existingUser) {
-    throw new DomainError('Email address is already registered.', 409)
-  }
-
-  const passwordHash = await dependencies.hashPassword(input.password)
-
-  try {
-    return await dependencies.createUserWithCart({
-      name: input.name.trim(),
-      email: input.email,
-      passwordHash,
-    })
-  } catch (error) {
-    if (isUniqueEmailConflict(error)) {
-      throw new DomainError('Email address is already registered.', 409)
+    const existing = await deps.findUserByEmail(email);
+    if (existing) {
+        throw new ErroDeDominio('Email já cadastrado.', 409);
     }
-    throw error
-  }
+
+    const passwordHash = await deps.hashPassword(input.senha);
+
+    try {
+        return await deps.createUserWithCart({
+            nome,
+            email,
+            senhaHash: passwordHash,
+        });
+    } catch (error) {
+        if (uniqueEmailConflict(error)) {
+            throw new ErroDeDominio('Email já cadastrado.', 409);
+        }
+        throw error;
+    }
 }
+

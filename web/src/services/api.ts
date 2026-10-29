@@ -1,96 +1,162 @@
-import type { LoginCredentials } from '@/types/user/Auth'
-import type { PublicUser, RegistrationDetails } from '@/types/user/User'
-
 /**
- * The only place in the frontend that calls the API. Pages call functions
- * from here, keeping the API URL in one place.
+ * O ÚNICO lugar do front que chama a API. Tela não faz `fetch` — tela chama uma
+ * função daqui. É isto que impede a URL da API de aparecer espalhada em 15
+ * componentes no dia em que ela mudar.
+ *
+ * Cada fatia acrescenta as suas funções neste arquivo (ou num irmão dele):
+ *   listarLivros(), obterCarrinho(), fecharPedido()...
  */
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api'
 
-/** Error returned by the API with a message that can be shown to the user. */
-export class ApiError extends Error {
-  readonly status: number
+import type { LivroDetalheDTO, LivroResponse } from '@/types/livro.type';
 
-  constructor(message: string, status: number) {
-    super(message)
-    this.name = 'ApiError'
-    this.status = status
+const URL_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
+
+export type CampoInvalido = {
+  campo: string;
+  mensagem: string;
+};
+
+/** Erro que a API devolveu com uma mensagem — dá para mostrar na tela. */
+export class ErroDaApi extends Error {
+  readonly status: number;
+  readonly campos: CampoInvalido[];
+
+  constructor(mensagem: string, status: number, campos: CampoInvalido[] = []) {
+    super(mensagem);
+    this.name = 'ErroDaApi';
+    this.status = status;
+    this.campos = campos;
+  }
+
+  mensagemParaTela(): string {
+    const detalhes = this.campos.map((campo) => campo.mensagem);
+    return detalhes.length > 0 ? detalhes.join(' ') : this.message;
   }
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(BASE_URL + path, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+function lerCampos(corpo: { campos?: unknown } | null): CampoInvalido[] {
+  if (!Array.isArray(corpo?.campos)) {
+    return [];
+  }
+
+  return corpo.campos.flatMap((item: unknown) => {
+    if (typeof item !== 'object' || item === null) {
+      return [];
+    }
+
+    if (!('campo' in item) || !('mensagem' in item)) {
+      return [];
+    }
+
+    const { campo, mensagem } = item;
+    if (typeof campo !== 'string' || typeof mensagem !== 'string') {
+      return [];
+    }
+
+    return [{ campo, mensagem }];
+  });
+}
+
+export async function request<T>(caminho: string, opcoes: RequestInit = {}): Promise<T> {
+  const resposta = await fetch(`${URL_BASE}${caminho}`, {
+    ...opcoes,
+    headers: { 'Content-Type': 'application/json', ...opcoes.headers },
     cache: 'no-store',
-  })
+  });
 
-  const body = await response.json().catch(() => null)
+  const corpo = await resposta.json().catch(() => null);
 
-  if (!response.ok) {
-    // The API returns { erro: "..." }; show its message when available.
-    throw new ApiError(body?.erro ?? 'Could not reach the API.', response.status)
+  if (!resposta.ok) {
+   
+    throw new ErroDaApi(
+      corpo?.erro ?? 'Não foi possível falar com a API.',
+      resposta.status,
+      lerCampos(corpo),
+    );
   }
 
-  return body as T
+  return corpo as T;
 }
 
-type ApiUser = {
-  id: string
-  nome: string
-  email: string
-  dtCriacao: string
+export type Saude = {
+  status: 'ok' | 'degradado';
+  api: 'ok';
+  banco: 'conectado' | 'inacessivel';
+};
+
+export function obterSaude(): Promise<Saude> {
+  return request<Saude>('/saude');
 }
 
-function toPublicUser(user: ApiUser): PublicUser {
-  return {
-    id: user.id,
-    name: user.nome,
-    email: user.email,
-    createdAt: user.dtCriacao,
-  }
-}
+export type PublicUser = {
+  id: string;
+  nome: string;
+  email: string;
+  dtCriacao: string;
+};
 
-export async function registerUser(details: RegistrationDetails): Promise<PublicUser> {
-  const user = await request<ApiUser>('/usuarios', {
+export type RegisterUserInput = {
+  nome: string;
+  email: string;
+  senha: string;
+};
+
+export function registerUser(data: RegisterUserInput): Promise<PublicUser> {
+  return request<PublicUser>('/usuarios', {
     method: 'POST',
-    body: JSON.stringify({
-      nome: details.name,
-      email: details.email,
-      senha: details.password,
-    }),
-  })
-  return toPublicUser(user)
+    body: JSON.stringify(data),
+  });
 }
 
-export async function authenticateUser(credentials: LoginCredentials): Promise<PublicUser> {
-  const user = await request<ApiUser>('/login', {
-    method: 'POST',
-    body: JSON.stringify({
-      email: credentials.email,
-      senha: credentials.password,
-    }),
-  })
-  return toPublicUser(user)
-}
+export function listarLivros(busca?: string, categoria?: string, pagina = 1): Promise<LivroResponse> {
+  const parametros = new URLSearchParams({ pagina: String(pagina) })
 
-type ApiHealth = {
-  status: 'ok' | 'degradado'
-  api: 'ok'
-  banco: 'conectado' | 'inacessivel'
-}
-
-export type ApiHealthStatus = {
-  status: 'ok' | 'degraded'
-  api: 'ok'
-  database: 'connected' | 'inaccessible'
-}
-
-export async function getApiHealth(): Promise<ApiHealthStatus> {
-  const health = await request<ApiHealth>('/saude')
-  return {
-    status: health.status === 'degradado' ? 'degraded' : 'ok',
-    api: health.api,
-    database: health.banco === 'conectado' ? 'connected' : 'inaccessible',
+  if (busca || categoria) {
+      if (busca) parametros.set('busca', busca)
+      if (categoria) parametros.set('categoria', categoria)
   }
+
+  return request<LivroResponse>(`/livros?${parametros.toString()}`)
+
+}
+
+export function obterLivroDetalhe(id: string): Promise<LivroDetalheDTO> {
+
+  return request<LivroDetalheDTO>(`/livros/${id}`)
+
+}
+export type LoginInput = {
+  email: string;
+  senha: string;
+};
+
+export type Login = {
+  token: string;
+  expiraEm: string;
+  usuario: PublicUser;
+};
+
+const CHAVE_TOKEN = 'livraria:token';
+
+export function obterToken(): string | null {
+  return typeof window === 'undefined' ? null : window.localStorage.getItem(CHAVE_TOKEN);
+}
+
+export async function login(data: LoginInput): Promise<Login> {
+  const resultado = await request<Login>('/auth', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  window.localStorage.setItem(CHAVE_TOKEN, resultado.token);
+  return resultado;
+}
+
+export async function logout(): Promise<void> {
+  const token = obterToken();
+  window.localStorage.removeItem(CHAVE_TOKEN);
+  if (!token) return;
+  await request<void>('/auth', {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }

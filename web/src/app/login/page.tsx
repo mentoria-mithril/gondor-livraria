@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react';
-import { authenticateUser, ApiError } from '@/services/api';
+import { login, ErroDaApi } from '@/services/api';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,27 +18,27 @@ export default function LoginPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [entering, setEntering] = useState(false);
+  const [senha, setSenha] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [entrando, setEntrando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErro(null);
-    setEntering(true);
+    setEntrando(true);
 
     try {
-      await authenticateUser({ email, password });
-      router.push('/');
+      await login({ email, senha });
+      router.push('/catalogo');
     } catch (caught: unknown) {
-      if (caught instanceof ApiError) {
-        setErro(caught.message);
+      if (caught instanceof ErroDaApi) {
+        setErro(caught.mensagemParaTela());
       } else {
-        setErro("Could not log in. Please try again.");
+        setErro('Não foi possível entrar. Tente de novo.');
       }
     } finally {
-      setEntering(false);
+      setEntrando(false);
     }
   }
 
@@ -47,7 +47,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-lg rounded-3xl border-white bg-white shadow-xl">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-normal tracking-tight text-[#2b241d]">
-            Enter your account
+            Entre na sua conta
           </CardTitle>
         </CardHeader>
 
@@ -73,7 +73,7 @@ export default function LoginPage() {
                   name="email"
                   type="email"
                   autoComplete="email"
-                  placeholder="your@email.com"
+                  placeholder="seu@email.com"
                   required
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
@@ -84,7 +84,7 @@ export default function LoginPage() {
 
             <div className="grid gap-2 mb-5">
               <Label htmlFor="senha" className="font-semibold text-[#2b241d]">
-                Password
+                Senha
               </Label>
               <div className="relative flex items-center">
                 <Lock
@@ -94,23 +94,22 @@ export default function LoginPage() {
                 <Input
                   id="senha"
                   name="senha"
-                  type={showPassword ? 'text' : 'password'}
+                  type={mostrarSenha ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
-                  minLength={6}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  value={senha}
+                  onChange={(event) => setSenha(event.target.value)}
                   className={`${campoClassName} pr-11`}
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  onClick={() => setShowPassword((atual) => !atual)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setMostrarSenha((atual) => !atual)}
+                  aria-label={mostrarSenha ? 'Esconder senha' : 'Mostrar senha'}
                   className="absolute right-1.5 cursor-pointer text-[#a39a8d] hover:bg-transparent hover:text-[#2b241d]"
                 >
-                  {showPassword ? (
+                  {mostrarSenha ? (
                     <EyeOff aria-hidden="true" className="size-4" />
                   ) : (
                     <Eye aria-hidden="true" className="size-4" />
@@ -121,25 +120,25 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              disabled={entering}
+              disabled={entrando}
               className="h-12 w-full cursor-pointer rounded-full bg-[#A60321] text-sm font-semibold text-white hover:bg-[#75182a]"
             >
-              {entering ? 'Entering...' : 'Enter'}
-              {!entering && <ArrowRight aria-hidden="true" className="size-4" />}
+              {entrando ? 'Entrando...' : 'Entrar'}
+              {!entrando && <ArrowRight aria-hidden="true" className="size-4" />}
             </Button>
           </form>
         </CardContent>
 
         <CardFooter className="justify-center border-[#e7ddcd] bg-transparent text-sm text-[#8a8177]">
-          Dont have an account?{' '}
+          Ainda não tem conta?{' '}
           <Link
-            href="/register"
+            href="/cadastro"
             className={buttonVariants({
               variant: 'link',
               className: 'h-auto px-1 text-[#A60321]',
             })}
           >
-            Create account
+            Criar conta
           </Link>
         </CardFooter>
       </Card>
