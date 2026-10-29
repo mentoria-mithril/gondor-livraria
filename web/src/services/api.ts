@@ -125,3 +125,38 @@ export function obterLivroDetalhe(id: string): Promise<LivroDetalheDTO> {
   return request<LivroDetalheDTO>(`/livros/${id}`)
 
 }
+export type LoginInput = {
+  email: string;
+  senha: string;
+};
+
+export type Login = {
+  token: string;
+  expiraEm: string;
+  usuario: PublicUser;
+};
+
+const CHAVE_TOKEN = 'livraria:token';
+
+export function obterToken(): string | null {
+  return typeof window === 'undefined' ? null : window.localStorage.getItem(CHAVE_TOKEN);
+}
+
+export async function login(data: LoginInput): Promise<Login> {
+  const resultado = await request<Login>('/auth', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  window.localStorage.setItem(CHAVE_TOKEN, resultado.token);
+  return resultado;
+}
+
+export async function logout(): Promise<void> {
+  const token = obterToken();
+  window.localStorage.removeItem(CHAVE_TOKEN);
+  if (!token) return;
+  await request<void>('/auth', {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}

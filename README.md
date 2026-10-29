@@ -113,7 +113,7 @@ Comandos úteis:
 
 ## O modelo de dados
 
-Seis modelos no `api/prisma/schema.prisma`. É o suficiente para a loja inteira:
+Sete modelos no `api/prisma/schema.prisma`. É o suficiente para a loja inteira:
 
 | Tabela | Campos que importam |
 | --- | --- |
@@ -123,6 +123,7 @@ Seis modelos no `api/prisma/schema.prisma`. É o suficiente para a loja inteira:
 | `item_carrinho` | id, carrinho_id (FK), livro_id (FK), quantidade — **`@@unique([carrinho_id, livro_id])`** |
 | `pedido` | id, usuario_id (FK), status, valor_total, dt_criacao |
 | `item_pedido` | id, pedido_id (FK), livro_id (FK), quantidade, **preco_unitario** |
+| `sessao` | id, token (único), usuario_id (FK), expira_em, dt_criacao |
 
 Duas decisões que vão aparecer em review, então já ficam escritas:
 
@@ -148,7 +149,8 @@ O contrato combinado. Mudança aqui passa por conversa, não por commit:
 
 ```
 POST   /api/usuarios              cadastro
-POST   /api/auth                  login
+POST   /api/auth                  login: cria a sessão e devolve o token
+DELETE /api/auth                  logout: apaga a sessão do token enviado
 
 GET    /api/livros                lista, com ?busca=, ?categoria=, ?pagina=
 GET    /api/livros/:id            detalhe
@@ -222,7 +224,7 @@ arquivo e o merge para de doer.
 | Fatia | O que entrega |
 | --- | --- |
 | **0 — Esqueleto** | Sprint 1, a turma inteira junto: `docker compose` com o Postgres, projeto da API de pé, `schema.prisma` com os seis modelos, primeira migração, `GET /api/saude` e o *seed* do catálogo. É o exemplo que as outras fatias copiam. |
-| **A — Conta** | `POST /api/usuarios`, `POST /api/auth`, hash de senha, middleware de autenticação, telas de cadastro e login |
+| **A — Conta** | `POST /api/usuarios`, `POST /api/auth`, `DELETE /api/auth`, hash de senha, sessão no banco e middleware `autenticar`, telas de cadastro e login |
 | **B — Catálogo** | `GET /api/livros` com busca, filtro e paginação, `GET /api/livros/:id`, listagem e página de detalhe |
 | **C — Carrinho** | as quatro rotas de `/api/cart`, a regra de juntar linhas repetidas, e a tela do carrinho |
 | **D — Pedido** | `POST /api/pedidos` com conferência de estoque, congelamento de preço e baixa de estoque, mais as telas de checkout e de "meus pedidos" |
