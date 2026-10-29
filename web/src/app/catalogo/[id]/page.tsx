@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { obterLivroDetalhe} from "@/services/api";
@@ -10,7 +9,6 @@ import HeroSection from "@/components/catalogo/HeroSection";
 import Sinopse from "@/components/catalogo/Sinopse";
 import {Card} from "@/components/ui/card";
 import AdicionarCarrinho from "@/components/catalogo/AddCart";
-
 
 export default function LivroDetalhePage() {
     const { id } = useParams<{ id: string }>();
@@ -52,6 +50,7 @@ export default function LivroDetalhePage() {
             <Card className="mx-auto flex max-w-2xl flex-col gap-8 p-8 text-[#4A1F1F]">
                 <Link href="/catalogo" className="flex w-fit items-center gap-2 hover:underline"><ArrowLeft className='h-4 w-4'/>voltar</Link>
                 <HeroSection titulo={livro.titulo} autor={livro.autor} categoria={livro.categoria}/>
+                <p>Quantidade em estoque: {livro.estoque}</p>
                 <Sinopse sinopse={livro.sinopse}/>
                 <AdicionarCarrinho preco={livro.preco} estoque={livro.estoque}/>
             </Card>
