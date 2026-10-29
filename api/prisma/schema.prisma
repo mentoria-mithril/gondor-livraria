@@ -23,8 +23,21 @@ model Usuario {
 
   carrinho Carrinho?
   pedidos  Pedido[]
+  sessoes  Sessao[]
 
   @@map("usuario")
+}
+
+model Sessao {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  usuarioId String   @map("usuario_id")
+  expiraEm  DateTime @map("expira_em")
+  dtCriacao DateTime @default(now()) @map("dt_criacao")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("sessao")
 }
 
 model Livro {

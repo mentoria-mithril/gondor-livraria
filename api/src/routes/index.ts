@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { saudeRotas } from './saudeRotas.js'
 import { cartRoutes } from './cartRoutes.js'
 import { userRoutes } from './userRoutes.js'
+import { authRoutes } from './authRoutes.js'
 import { livroRotas } from './livroRotas.js'
 
 
@@ -19,5 +20,6 @@ rotas.use(saudeRotas)
 rotas.use(cartRoutes)
 
 rotas.use(userRoutes)
+rotas.use(authRoutes)
 
 rotas.use(livroRotas)
