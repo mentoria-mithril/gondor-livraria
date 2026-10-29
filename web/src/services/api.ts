@@ -105,3 +105,21 @@ export function registerUser(data: RegisterUserInput): Promise<PublicUser> {
     body: JSON.stringify(data),
   });
 }
+
+export function listarLivros(busca?: string, categoria?: string, pagina = 1): Promise<LivroResponse> {
+  const parametros = new URLSearchParams({ pagina: String(pagina) })
+
+  if (busca || categoria) {
+      if (busca) parametros.set('busca', busca)
+      if (categoria) parametros.set('categoria', categoria)
+  }
+
+  return chamar<LivroResponse>(`/livros?${parametros.toString()}`)
+
+}
+
+export function obterLivroDetalhe(id: string): Promise<LivroDetalheDTO> {
+
+  return chamar<LivroDetalheDTO>(`/livros/${id}`)
+
+}
