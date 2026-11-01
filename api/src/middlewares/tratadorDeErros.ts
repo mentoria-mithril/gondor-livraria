@@ -31,6 +31,20 @@ export function tratadorDeErros(
     return
   }
 
+  if (erro instanceof SyntaxError && 'type' in erro && erro.type === 'entity.parse.failed') {
+    res.status(400).json({
+      erro: 'JSON inválido.'
+    });
+    return;
+  }
+
+  if (erro instanceof Error && 'type' in erro && erro.type === 'entity.too.large') {
+    res.status(413).json({
+      erro: 'Corpo grande demais.'
+    });
+    return;
+  }
+
   // Chegou aqui: é bug. Loga inteiro no servidor e devolve pouco para o cliente
   // — mensagem de exceção pode vazar nome de tabela e caminho de arquivo.
   console.error('[erro não tratado]', erro)
