@@ -268,6 +268,15 @@ Os acordos completos da turma — cerimônias, papéis e avaliação — estão 
 - [ ] `dev` continua de pé depois do merge
 - [ ] Card em `Concluído`
 
+### O que a review confere
+
+Vale para todo PR, de quem escreve e de quem revisa. Além da Definição de Pronto:
+
+- [ ] Quem é o usuário e o que sai na resposta: confira os dois em toda rota
+- [ ] Dinheiro e estoque: de onde vem cada valor, e o que acontece se der erro no meio
+- [ ] Cada critério de aceite tem um teste que falharia se o critério quebrasse
+- [ ] Código que outra pessoa lê sem precisar perguntar: nomes, comentários, sobras
+
 ---
 
 Mentor / Product Owner: [@douglasmeneses](https://github.com/douglasmeneses).
