@@ -7,6 +7,7 @@ import { addCartItem, getCart, removeCartItem, updateCartItemQuantity } from "@/
 
 type CartContextValue = {
     items: SavedCartItem[]
+    total: number
     addToCart: (bookId: number, quantity?: number) => Promise<void>
     decreaseQuantity: (bookId: number) => Promise<void>
     increaseQuantity: (bookId: number) => Promise<void>
@@ -17,6 +18,7 @@ const CartContext = createContext<CartContextValue | null>(null)
 export function CartProvider({ children }: { children: React.ReactNode }){
 
     const [items, setItems] = useState<SavedCartItem[]>([])
+    const total = items.reduce((sum, item) => sum + item.subtotal, 0)
 
     useEffect(() => {
         getCart()
@@ -67,7 +69,7 @@ export function CartProvider({ children }: { children: React.ReactNode }){
     }
 
     return (
-        <CartContext value={{ items, addToCart, decreaseQuantity, increaseQuantity }}>
+        <CartContext value={{ items, total, addToCart, decreaseQuantity, increaseQuantity }}>
             {children}
         </CartContext>
     )
