@@ -13,11 +13,11 @@ export function CartItemCard(props: Props) {
     return(
         <SidebarMenuItem>
             <Item>
-                <ItemMedia variant="image" className="w-16 h-16 [&_img]:object-contain group-data-[collapsible=icon]:hidden">
-                   {props.item.imageUrl
-                    ? <img src={props.item.imageUrl} alt={props.item.title}/>
-                    : <div className="bg-sidebar-foreground/10 size-full"/>}
-                </ItemMedia>
+                {props.item.imageUrl && (
+                    <ItemMedia variant="image" className="w-16 h-16 [&_img]:object-contain group-data-[collapsible=icon]:hidden">
+                        <img src={props.item.imageUrl} alt={props.item.title}/>
+                    </ItemMedia>
+                )}
                 <ItemContent className="group-data-[collapsible=icon]:hidden">
                     <ItemTitle><span className="line-clamp-2">{props.item.title}</span></ItemTitle>
                     <ItemDescription>R$ {props.item.subtotal.toFixed(2)}</ItemDescription>

@@ -49,14 +49,14 @@ export default function CatalogoPage() {
 
     return (
         <div className="min-h-screen bg-[#F2E9D8]">
-            <div className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-16 text-[#4A1F1F]">
+            <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-6 py-16 text-[#4A1F1F]">
                 <header>
                     <h1 className="text-3xl font-semibold tracking-tight text-[#A60321]">
                         Gondor Livraria
                     </h1>
                     <FilterCatalogo handleSubmit={handleSubmit} setBusca={setBusca} setCategoria={setCategoria} setPagina={setPagina} />
                 </header>
-                <main>
+                <section>
                     <h2 className="text-sm font-medium uppercase tracking-wide text-[#A60321]">
                         Catálogo de Livros
                     </h2>
@@ -83,7 +83,7 @@ export default function CatalogoPage() {
                             setPagina={setPagina}
                         />
                     )}
-                </main>
+                </section>
             </div>
         </div>
     );

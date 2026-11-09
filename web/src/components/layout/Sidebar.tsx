@@ -8,16 +8,11 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import type { SavedCartItem } from "@/types/cart/cartTypes"
 import { CartItemCard } from "../cart/CartItemCard"
+import { useCart } from "@/hooks/cart/use-cart"
 
-type Props = {
-  items: SavedCartItem[]
-  onIncrease: (bookId: number) => void
-  onDecrease: (bookId: number) => void
-}
-
-export function AppSidebar({items, onIncrease, onDecrease}: Props) {
+export function AppSidebar() {
+  const { items, decreaseQuantity, increaseQuantity } = useCart();
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="flex-row items-center justify-between  group-data-[collapsible=icon]:justify-center ">
@@ -43,8 +38,8 @@ export function AppSidebar({items, onIncrease, onDecrease}: Props) {
                 <CartItemCard
                   key={item.id}
                   item={item}
-                  onIncrease={onIncrease}
-                  onDecrease={onDecrease}
+                  onIncrease={increaseQuantity}
+                  onDecrease={decreaseQuantity}
                 />
               ))}
             </SidebarMenu>
@@ -52,7 +47,7 @@ export function AppSidebar({items, onIncrease, onDecrease}: Props) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="group-data-[collapsible=icon]:hidden">
-          <Button variant="outline" className="flex flex-col gap-2 p-2 bg-[#A60321] hover:bg-primary/30 rounded-full">Fechar pedido</Button>
+          <Button variant="outline" className="flex flex-col gap-2 p-2 bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/80 hover:text-sidebar-primary-foreground rounded-full">Fechar pedido</Button>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

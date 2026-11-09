@@ -3,15 +3,17 @@
 import {useState} from "react";
 import {Button} from "@/components/ui/button";
 import {ShoppingCart} from "lucide-react";
+import { useCart } from "@/hooks/cart/use-cart";
 
 interface AdicionarCarrinhoProps {
+    livroId: number;
     preco: number;
     estoque: number;
 }
 
-export default function AdicionarCarrinho({preco, estoque}: Readonly<AdicionarCarrinhoProps>) {
+export default function AdicionarCarrinho({livroId, preco, estoque}: Readonly<AdicionarCarrinhoProps>) {
     const [quantidade, setQuantidade] = useState(1);
-
+    const { addToCart } = useCart();
     const precoFormatado = preco.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
     const esgotado = estoque === 0;
 
@@ -28,7 +30,7 @@ export default function AdicionarCarrinho({preco, estoque}: Readonly<AdicionarCa
                 <Button onClick={aumentar} disabled={quantidade >= estoque}>+</Button>
             </div>
 
-            <Button className='flex-1' disabled={esgotado}>
+            <Button className='flex-1' disabled={esgotado} onClick={() => addToCart(livroId, quantidade)}>
                 <ShoppingCart className='h-4 w-4'/>
                 {esgotado ? 'Livro fora de estoque' : 'Adicionar ao Carrinho'}
             </Button>

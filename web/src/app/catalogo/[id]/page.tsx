@@ -33,12 +33,12 @@ export default function LivroDetalhePage() {
     }, [id]);
 
     if (carregando) return (
-        <div className="flex min-h screen items-center justify-center bg-[#F2E9D8]">
+        <div className="flex flex-1 items-center justify-center bg-[#F2E9D8]">
             <Loader2 className="h-8 w-8 animate-spin text-[#A60321] "/>
         </div>
     );
     if (erro) return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#F2E9D8] text-[#4A1F1F]">
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-[#F2E9D8] text-[#4A1F1F]">
             <p>{erro.message}</p>
             <Link href="/catalogo" className="flex w-fit items-center gap-2 hover:underline"><ArrowLeft className='h-4 w-4'/>Voltar ao Catálogo</Link>
         </div>
@@ -46,13 +46,13 @@ export default function LivroDetalhePage() {
     if (!livro) return null;
 
     return (
-        <div className="min-h-screen bg-[#F2E9D8] px-6 py-16">
+        <div className="bg-[#F2E9D8] px-6 py-16">
             <Card className="mx-auto flex max-w-2xl flex-col gap-8 p-8 text-[#4A1F1F]">
                 <Link href="/catalogo" className="flex w-fit items-center gap-2 hover:underline"><ArrowLeft className='h-4 w-4'/>voltar</Link>
                 <HeroSection titulo={livro.titulo} autor={livro.autor} categoria={livro.categoria}/>
                 <p>Quantidade em estoque: {livro.estoque}</p>
                 <Sinopse sinopse={livro.sinopse}/>
-                <AdicionarCarrinho preco={livro.preco} estoque={livro.estoque}/>
+                <AdicionarCarrinho livroId={livro.id} preco={livro.preco} estoque={livro.estoque}/>
             </Card>
         </div>
     );
