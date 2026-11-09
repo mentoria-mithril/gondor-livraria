@@ -4,7 +4,7 @@ import { SavedCart, SavedCartItem } from '../../types/cart/cartTypes'
 const userHeader = { 'x-user-id': process.env.NEXT_PUBLIC_DEV_USER_ID ?? '' }
 
 export async function getCart(): Promise<SavedCart> {
-    return await request<SavedCart>('/cart', {
+    return await request<SavedCart>('/carts', {
         headers: userHeader,
     })
 }
