@@ -3,7 +3,7 @@
 import {useState} from "react";
 import {Button} from "@/components/ui/button";
 import {ShoppingCart} from "lucide-react";
-import { useCart } from "@/hooks/cart/use-cart";
+import { useCart } from "@/hooks/cart/UseCart";
 
 interface AdicionarCarrinhoProps {
     livroId: number;

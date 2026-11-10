@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { CartItemCard } from "../cart/CartItemCard"
-import { useCart } from "@/hooks/cart/use-cart"
+import { useCart } from "@/hooks/cart/UseCart"
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })
 
