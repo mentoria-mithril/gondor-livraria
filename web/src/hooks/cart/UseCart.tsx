@@ -1,14 +1,16 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { toast } from "sonner";
 import type { SavedCartItem } from "@/types/cart/cartTypes";
 import { addCartItem, getCart, removeCartItem, updateCartItemQuantity } from "@/services/cart/cartService";
 
 type CartContextValue = {
     items: SavedCartItem[]
-    error: string | null
-    addToCart: (bookId: number) => Promise<void>
+    total: number
+    addToCart: (bookId: number, quantity?: number) => Promise<void>
     decreaseQuantity: (bookId: number) => Promise<void>
+    increaseQuantity: (bookId: number) => Promise<void>
 }
 
 const CartContext = createContext<CartContextValue | null>(null)
@@ -16,12 +18,12 @@ const CartContext = createContext<CartContextValue | null>(null)
 export function CartProvider({ children }: { children: React.ReactNode }){
 
     const [items, setItems] = useState<SavedCartItem[]>([])
-    const [error, setError] = useState<string | null>(null)
+    const total = items.reduce((sum, item) => sum + item.subtotal, 0)
 
     useEffect(() => {
         getCart()
             .then((cart) => setItems(cart.items))
-            .catch((err: Error) => setError(err.message))
+            .catch((err: Error) => toast.error(err.message))
     }, [])
 
     function upsert(saved: SavedCartItem) {
@@ -32,22 +34,29 @@ export function CartProvider({ children }: { children: React.ReactNode }){
         )
     }
 
-    async function addToCart(bookId: number){
+    async function addToCart(bookId: number, quantity: number = 1){
         try {
-            setError(null)
-            upsert(await addCartItem(bookId, 1))
+            upsert(await addCartItem(bookId, quantity))
         } catch (err) {
-            setError((err as Error).message)
+            toast.error((err as Error).message)
         }
     }
+    async function increaseQuantity(bookId: number){
+        const item = items.find((i) => i.bookId === bookId)
+        if (!item) return
 
+        try {
+            upsert(await updateCartItemQuantity(item.id, item.quantity + 1))
+        } catch (err) {
+            toast.error((err as Error).message)
+        }
+    }
 
     async function decreaseQuantity(bookId: number){
         const item = items.find((i) => i.bookId === bookId)
         if (!item) return
 
         try {
-            setError(null)
             if (item.quantity > 1) {
                 upsert(await updateCartItemQuantity(item.id, item.quantity - 1))
             } else {
@@ -55,12 +64,12 @@ export function CartProvider({ children }: { children: React.ReactNode }){
                 setItems((current) => current.filter((i) => i.id !== item.id))
             }
         } catch (err) {
-            setError((err as Error).message)
+            toast.error((err as Error).message)
         }
     }
 
     return (
-        <CartContext value={{ items, error, addToCart, decreaseQuantity }}>
+        <CartContext value={{ items, total, addToCart, decreaseQuantity, increaseQuantity }}>
             {children}
         </CartContext>
     )

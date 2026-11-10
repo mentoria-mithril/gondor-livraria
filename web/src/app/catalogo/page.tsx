@@ -48,43 +48,41 @@ export default function CatalogoPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F2E9D8]">
-            <div className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-16 text-[#4A1F1F]">
-                <header>
-                    <h1 className="text-3xl font-semibold tracking-tight text-[#A60321]">
-                        Gondor Livraria
-                    </h1>
-                    <FilterCatalogo handleSubmit={handleSubmit} setBusca={setBusca} setCategoria={setCategoria} setPagina={setPagina} />
-                </header>
-                <main>
-                    <h2 className="text-sm font-medium uppercase tracking-wide text-[#A60321]">
-                        Catálogo de Livros
-                    </h2>
+        <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-16 text-[#4A1F1F]">
+            <header>
+                <h1 className="text-3xl font-semibold tracking-tight text-[#A60321]">
+                    Gondor Livraria
+                </h1>
+                <FilterCatalogo handleSubmit={handleSubmit} setBusca={setBusca} setCategoria={setCategoria} setPagina={setPagina} />
+            </header>
+            <section>
+                <h2 className="text-sm font-medium uppercase tracking-wide text-[#A60321]">
+                    Catálogo de Livros
+                </h2>
 
-                    {livros.count > 0 ? (
-                        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                            {livros.value.map((livro) => (
-                                <CardLivro
-                                    key={livro.id}
-                                    {...livro}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="mt-3 text-sm text-[#6E4840]">
-                            Nenhum livro encontrado.
-                        </p>
-                    )}
+                {livros.count > 0 ? (
+                    <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        {livros.value.map((livro) => (
+                            <CardLivro
+                                key={livro.id}
+                                {...livro}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <p className="mt-3 text-sm text-[#6E4840]">
+                        Nenhum livro encontrado.
+                    </p>
+                )}
 
-                    {totalPaginas > 1 && (
-                        <PaginationCatalogo
-                            pagina={pagina}
-                            totalPaginas={totalPaginas}
-                            setPagina={setPagina}
-                        />
-                    )}
-                </main>
-            </div>
+                {totalPaginas > 1 && (
+                    <PaginationCatalogo
+                        pagina={pagina}
+                        totalPaginas={totalPaginas}
+                        setPagina={setPagina}
+                    />
+                )}
+            </section>
         </div>
     );
 }
