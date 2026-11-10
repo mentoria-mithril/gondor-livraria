@@ -11,12 +11,6 @@ export async function obterLivros(req: Request, res: Response): Promise<void> {
   }
 
   const livros = await buscarLivros(filtros);
-
-  if (livros.count === 0) {
-    res.json({ message: 'nenhum livro encontrado' })
-    return
-  }
-
   res.json(livros)
 }
 

@@ -26,7 +26,7 @@ export default function CatalogoPage() {
             }
         };
 
-        fetchLivros();
+        void fetchLivros();
     }, [busca, categoria, pagina]);
 
     const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {

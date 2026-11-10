@@ -1,4 +1,5 @@
 import { criarServidor } from './servidor.js'
+import 'dotenv/config'
 import { prisma } from './repositories/prisma.js'
 
 const PORTA = Number(process.env.PORT) || 3333
