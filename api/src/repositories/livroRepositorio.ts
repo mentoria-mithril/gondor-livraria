@@ -1,5 +1,6 @@
 import { prisma } from "./prisma.js";
 import type {LivroConsulta, LivroConsultaQuantidade, LivroConsultaDTO, LivroDetalheDTO} from "../types/livro.type.js";
+import { QTD_LIVROS_POR_PAGINA } from "../constants/livroConstant.js";
 
 export async function buscarLivrosPorFiltros({ busca, categoria, pagina }: LivroConsulta): Promise<LivroConsultaDTO[]> {
     const buscaParam = busca?.trim() || null;
@@ -26,8 +27,8 @@ export async function buscarLivrosPorFiltros({ busca, categoria, pagina }: Livro
                 OR unaccent(l.categoria) ILIKE unaccent('%' || ${categoriaParam} || '%')
             )
         ORDER BY l.id
-        LIMIT 6
-        OFFSET ${(pagina - 1) * 6};
+        LIMIT ${QTD_LIVROS_POR_PAGINA}
+        OFFSET ${(pagina - 1) * QTD_LIVROS_POR_PAGINA};
     `;
     return livros.map((livro) => ({
         ...livro,
